@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.orm import Session
 
+from app.catalog.models import ProfileMovieRating
+from app.movie_night.models import GroupMovieVeto, MovieNightViewer, WatchParticipant
+from app.onboarding.models import ProfileOnboardingResponse
 from app.profiles.models import Profile
 
 
@@ -31,5 +34,46 @@ def update_profile(db: Session, profile: Profile, name: str, birth_year: int) ->
 
 
 def delete_profile(db: Session, profile: Profile) -> None:
+    """Permanently remove a profile and all personal data tied to it.
+
+    We delete explicitly instead of relying only on SQLite ON DELETE CASCADE.
+    This prevents a recycled profile id from inheriting stale taste data.
+    """
+    profile_id = profile.id
+
+    db.execute(
+        delete(ProfileOnboardingResponse).where(
+            ProfileOnboardingResponse.profile_id == profile_id
+        )
+    )
+    db.execute(
+        delete(ProfileMovieRating).where(
+            ProfileMovieRating.profile_id == profile_id
+        )
+    )
+    db.execute(
+        delete(WatchParticipant).where(
+            WatchParticipant.profile_id == profile_id
+        )
+    )
+    db.execute(
+        delete(MovieNightViewer).where(
+            MovieNightViewer.profile_id == profile_id
+        )
+    )
+
+    # Group vetoes use a normalized comma-separated viewer key instead of a FK.
+    token = str(profile_id)
+    db.execute(
+        delete(GroupMovieVeto).where(
+            or_(
+                GroupMovieVeto.viewer_key == token,
+                GroupMovieVeto.viewer_key.like(f"{token},%"),
+                GroupMovieVeto.viewer_key.like(f"%,{token}"),
+                GroupMovieVeto.viewer_key.like(f"%,{token},%"),
+            )
+        )
+    )
+
     db.delete(profile)
     db.commit()

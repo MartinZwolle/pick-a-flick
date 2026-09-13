@@ -1,0 +1,22 @@
+Pick a Flick M9.1
+
+Fixes from real household testing.
+
+1. Deleting a profile now explicitly removes:
+- onboarding responses
+- personal ratings / favorites / rewatch flags / vetoes
+- watch-event participants
+- movie-night viewer links
+- group vetoes containing that profile id
+
+This prevents SQLite from reusing a deleted profile id and accidentally
+attaching old taste data to a newly created profile.
+
+2. Onboarding is now much more birth-year aware:
+- about 14 of 20 anchors come from the person's likely own viewing era
+- about 6 remain cross-generational
+- the anchor pool now contains substantially more recent/family films
+- birth year changes recognizability only, never taste scoring
+
+No database migration.
+Apply over M9.

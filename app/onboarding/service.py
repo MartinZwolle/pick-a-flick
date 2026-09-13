@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.catalog import service as catalog_service
@@ -53,55 +53,80 @@ ANCHORS = (
     Anchor(27205, "Inception", 2010, "scifi"),
     Anchor(77338, "The Intouchables", 2011, "comedy"),
     Anchor(68718, "Django Unchained", 2012, "crime"),
+    Anchor(109445, "Frozen", 2013, "animation"),
     Anchor(120467, "The Grand Budapest Hotel", 2014, "comedy"),
+    Anchor(150540, "Inside Out", 2015, "animation"),
     Anchor(76341, "Mad Max: Fury Road", 2015, "action"),
+    Anchor(269149, "Zootopia", 2016, "animation"),
+    Anchor(277834, "Moana", 2016, "animation"),
+    Anchor(354912, "Coco", 2017, "animation"),
+    Anchor(284054, "Black Panther", 2018, "action"),
     Anchor(324857, "Spider-Man: Into the Spider-Verse", 2018, "animation"),
+    Anchor(299534, "Avengers: Endgame", 2019, "action"),
     Anchor(496243, "Parasite", 2019, "thriller"),
     Anchor(546554, "Knives Out", 2019, "crime"),
     Anchor(438631, "Dune", 2021, "scifi"),
+    Anchor(568124, "Encanto", 2021, "animation"),
+    Anchor(508947, "Turning Red", 2022, "animation"),
     Anchor(545611, "Everything Everywhere All at Once", 2022, "comedy"),
     Anchor(346698, "Barbie", 2023, "comedy"),
     Anchor(872585, "Oppenheimer", 2023, "drama"),
+    Anchor(502356, "The Super Mario Bros. Movie", 2023, "animation"),
+    Anchor(787699, "Wonka", 2023, "fantasy"),
+    Anchor(1022789, "Inside Out 2", 2024, "animation"),
 )
 
 
 def anchor_set(profile: Profile) -> list[Anchor]:
-    """Choose recognizable anchors near the profile's formative film years.
+    """Choose recognizable, varied anchors for this person's age.
 
-    Birth year only influences recognizability, never the resulting taste score.
-    Buckets prevent a list consisting almost entirely of one kind of movie.
+    About 70% comes from the person's likely own movie-watching years.
+    The remaining 30% stays cross-generational. Birth year affects
+    recognizability only and is never used as a taste signal.
     """
     current_year = datetime.now().year
-    target_year = min(current_year - 2, profile.birth_year + 20)
+    watch_start = profile.birth_year + 6
+    formative_target = min(current_year - 1, profile.birth_year + 16)
 
-    def score(anchor: Anchor) -> tuple[int, int]:
-        too_early_penalty = 18 if anchor.year < profile.birth_year + 8 else 0
-        return (abs(anchor.year - target_year) + too_early_penalty, anchor.year)
+    def distance(anchor: Anchor) -> tuple[int, int]:
+        early_penalty = max(0, watch_start - anchor.year) * 4
+        return (abs(anchor.year - formative_target) + early_penalty, -anchor.year)
 
-    candidates = sorted(ANCHORS, key=score)
+    available = [a for a in ANCHORS if a.year <= current_year]
+    age_relevant = sorted(
+        [a for a in available if a.year >= watch_start],
+        key=distance,
+    )
+    cross_generational = sorted(
+        [a for a in available if a.year < watch_start],
+        key=lambda a: (-a.year, abs(a.year - formative_target)),
+    )
+
     selected: list[Anchor] = []
     bucket_counts: dict[str, int] = {}
 
-    for anchor in candidates:
-        if anchor.year > current_year:
-            continue
-        if bucket_counts.get(anchor.bucket, 0) >= 4:
-            continue
-        selected.append(anchor)
-        bucket_counts[anchor.bucket] = bucket_counts.get(anchor.bucket, 0) + 1
-        if len(selected) == ANCHOR_COUNT:
-            break
-
-    if len(selected) < ANCHOR_COUNT:
-        selected_ids = {item.tmdb_id for item in selected}
-        for anchor in candidates:
-            if anchor.tmdb_id in selected_ids:
+    def take(pool: list[Anchor], target: int, bucket_limit: int = 5) -> None:
+        for anchor in pool:
+            if len(selected) >= target:
+                break
+            if anchor in selected:
+                continue
+            if bucket_counts.get(anchor.bucket, 0) >= bucket_limit:
                 continue
             selected.append(anchor)
+            bucket_counts[anchor.bucket] = bucket_counts.get(anchor.bucket, 0) + 1
+
+    take(age_relevant, 14)
+    take(cross_generational, 20)
+
+    if len(selected) < ANCHOR_COUNT:
+        for anchor in sorted(available, key=distance):
+            if anchor not in selected:
+                selected.append(anchor)
             if len(selected) == ANCHOR_COUNT:
                 break
 
-    return selected
+    return selected[:ANCHOR_COUNT]
 
 
 def responses(db: Session, profile_id: int) -> dict[int, str]:
@@ -130,7 +155,6 @@ def save_anchor_response(
 ) -> None:
     if response not in {"dislike", "neutral", "like", "love", "not_seen"}:
         raise ValueError("Ongeldige onboardingrespons")
-
     existing = db.scalar(
         select(ProfileOnboardingResponse).where(
             ProfileOnboardingResponse.profile_id == profile.id,
@@ -144,7 +168,6 @@ def save_anchor_response(
         db.add(existing)
     else:
         existing.response = response
-
     if response != "not_seen":
         movie = catalog_service.get_or_fetch_movie(db, tmdb_id)
         rating_map = {"dislike": -1, "neutral": 0, "like": 1, "love": 2}

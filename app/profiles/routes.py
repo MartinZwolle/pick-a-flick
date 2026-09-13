@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.catalog.service import list_profile_movies
+from app.catalog.service import list_profile_movies, profile_taste_summary
 from app.database import get_db
 from app.profiles import service
 
@@ -70,7 +70,6 @@ def create_profile(
             },
             status_code=409,
         )
-    # M2/M4 hook: this will become the onboarding flow.
     return RedirectResponse(url=f"/profiles/{profile.id}", status_code=303)
 
 
@@ -79,10 +78,23 @@ def profile_detail(profile_id: int, request: Request, db: Session = Depends(get_
     profile = service.get_profile(db, profile_id)
     if profile is None:
         raise HTTPException(status_code=404, detail="Profiel niet gevonden")
+
+    movie_ratings = list_profile_movies(db, profile.id)
+    favorites = [item for item in movie_ratings if item.favorite and not item.veto]
+    rewatchables = [item for item in movie_ratings if item.rewatchable and not item.veto]
+    vetoes = [item for item in movie_ratings if item.veto]
+
     return templates.TemplateResponse(
         request=request,
         name="profiles/detail.html",
-        context={"profile": profile, "movie_ratings": list_profile_movies(db, profile.id)},
+        context={
+            "profile": profile,
+            "movie_ratings": movie_ratings,
+            "favorites": favorites,
+            "rewatchables": rewatchables,
+            "vetoes": vetoes,
+            "taste": profile_taste_summary(db, profile.id),
+        },
     )
 
 

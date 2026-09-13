@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+from collections import defaultdict
+
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.catalog.models import Movie, MovieCredit, MovieGenre, ProfileMovieRating
@@ -54,6 +56,47 @@ def list_profile_movies(db: Session, profile_id: int) -> list[ProfileMovieRating
     )
 
 
+def profile_taste_summary(db: Session, profile_id: int) -> dict:
+    """Build a small, deterministic taste summary from explicit positive ratings.
+
+    This is deliberately simple in M3: no ML and no recency weighting. A normal
+    positive rating counts as 1, a heart as 2, and a favourite adds 2 more.
+    Negative/vetoed movies never contribute positive taste signals.
+    """
+    ratings = list_profile_movies(db, profile_id)
+
+    genre_scores: dict[str, float] = defaultdict(float)
+    actor_scores: dict[str, float] = defaultdict(float)
+    director_scores: dict[str, float] = defaultdict(float)
+
+    for item in ratings:
+        if item.veto or item.rating is None or item.rating <= 0:
+            continue
+
+        weight = 1.0 if item.rating == 1 else 2.0
+        if item.favorite:
+            weight += 2.0
+
+        for genre in item.movie.genres:
+            genre_scores[genre.name] += weight
+
+        for credit in item.movie.credits:
+            if credit.role_type == "director":
+                director_scores[credit.name] += weight
+            elif credit.role_type == "actor" and (credit.billing_order is None or credit.billing_order < 3):
+                actor_scores[credit.name] += weight
+
+    def top(scores: dict[str, float], limit: int) -> list[dict]:
+        ordered = sorted(scores.items(), key=lambda pair: (-pair[1], pair[0].lower()))
+        return [{"name": name, "score": score} for name, score in ordered[:limit]]
+
+    return {
+        "genres": top(genre_scores, 5),
+        "directors": top(director_scores, 4),
+        "actors": top(actor_scores, 6),
+    }
+
+
 def save_profile_rating(
     db: Session,
     profile: Profile,
@@ -76,6 +119,16 @@ def save_profile_rating(
     db.commit()
     db.refresh(record)
     return record
+
+
+def remove_profile_rating(db: Session, profile_id: int, movie_id: int) -> None:
+    db.execute(
+        delete(ProfileMovieRating).where(
+            ProfileMovieRating.profile_id == profile_id,
+            ProfileMovieRating.movie_id == movie_id,
+        )
+    )
+    db.commit()
 
 
 def _store_movie(db: Session, details: MovieDetails) -> Movie:

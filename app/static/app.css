@@ -79,3 +79,27 @@ input { width: 100%; font: inherit; color: var(--text); background: var(--bg); b
   .movie-detail-poster { width: min(70vw, 280px); margin: 0 auto; }
   .rating-options { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* M3 — Mijn filmsmaak */
+.profile-header { display: flex; gap: 1rem; align-items: center; }
+.profile-header h1 { margin-bottom: .35rem; }
+.insight-panel { padding: 1.2rem; background: linear-gradient(135deg, var(--panel-2), var(--panel)); border: 1px solid var(--border); border-radius: 16px; }
+.insight-panel h2 { margin: .2rem 0 .4rem; }
+.taste-insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem; }
+.taste-insights h3 { margin: 0 0 .55rem; font-size: .9rem; }
+.poster-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: .8rem; }
+.poster-tile { min-width: 0; display: grid; align-content: start; gap: .25rem; }
+.poster-tile img { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 12px; border: 1px solid var(--border); }
+.poster-tile strong { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: .88rem; }
+.poster-tile span { color: var(--muted); font-size: .8rem; }
+.rated-movie-copy { min-width: 0; padding-right: .8rem; }
+.rated-movie-copy small { color: var(--muted); }
+.veto-section { border-top: 1px solid var(--border); padding-top: 1.2rem; }
+.veto-list { display: flex; flex-wrap: wrap; gap: .5rem; }
+.veto-list a { border: 1px solid rgba(255,107,107,.35); color: var(--danger); border-radius: 999px; padding: .4rem .65rem; font-size: .85rem; }
+.remove-rating-form { margin-top: 1.2rem; }
+.text-danger { appearance: none; border: 0; background: none; color: var(--danger); padding: 0; cursor: pointer; text-decoration: underline; font: inherit; }
+@media (max-width: 600px) {
+  .profile-header { align-items: flex-start; }
+  .poster-strip { grid-template-columns: repeat(3, 1fr); }
+}

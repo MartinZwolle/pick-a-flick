@@ -6,7 +6,7 @@
     {% if movie.poster_url %}<img src="{{ movie.poster_url }}" alt="Poster {{ movie.title }}">{% else %}<div class="poster-placeholder large">🎬</div>{% endif %}
   </div>
   <div>
-    <p class="eyebrow">Film toevoegen aan {{ profile.name }}</p>
+    <p class="eyebrow">{% if rating %}Beoordeling van {{ profile.name }}{% else %}Film toevoegen aan {{ profile.name }}{% endif %}</p>
     <h1>{{ movie.title }}</h1>
     <p class="muted">
       {{ movie.release_year or '' }}
@@ -39,10 +39,18 @@
         <label><input type="checkbox" name="veto" {% if rating and rating.veto %}checked{% endif %}> 🚫 Nooit meer voorstellen</label>
       </div>
       <div class="actions">
-        <button class="button primary" type="submit">Opslaan</button>
-        <a class="button" href="/movies/search?profile_id={{ profile.id }}">Andere film zoeken</a>
+        <button class="button primary" type="submit">{% if rating %}Beoordeling bijwerken{% else %}Opslaan{% endif %}</button>
+        <a class="button" href="/profiles/{{ profile.id }}">Terug naar mijn filmsmaak</a>
+        {% if not rating %}<a class="button" href="/movies/search?profile_id={{ profile.id }}">Andere film zoeken</a>{% endif %}
       </div>
     </form>
+
+    {% if rating %}
+    <form class="remove-rating-form" method="post" action="/movies/{{ movie.id }}/remove-rating" onsubmit="return confirm('Deze film uit het profiel van {{ profile.name }} verwijderen?');">
+      <input type="hidden" name="profile_id" value="{{ profile.id }}">
+      <button class="text-danger" type="submit">Film uit mijn profiel verwijderen</button>
+    </form>
+    {% endif %}
   </div>
 </section>
 {% endblock %}

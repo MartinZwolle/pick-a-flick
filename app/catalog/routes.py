@@ -90,3 +90,17 @@ def rate_movie(
         veto=veto == "on",
     )
     return RedirectResponse(url=f"/profiles/{profile_id}", status_code=303)
+
+
+@router.post("/movies/{movie_id}/remove-rating")
+def remove_rating(
+    movie_id: int,
+    profile_id: int = Form(...),
+    db: Session = Depends(get_db),
+):
+    profile = profile_service.get_profile(db, profile_id)
+    movie = service.get_movie(db, movie_id)
+    if profile is None or movie is None:
+        raise HTTPException(status_code=404, detail="Profiel of film niet gevonden")
+    service.remove_profile_rating(db, profile.id, movie.id)
+    return RedirectResponse(url=f"/profiles/{profile_id}", status_code=303)

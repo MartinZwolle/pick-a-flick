@@ -11,8 +11,8 @@ router=APIRouter(prefix="/filmavond",tags=["movie-night"]);templates=Jinja2Templ
 def start(request:Request,db:Session=Depends(get_db)):
     return templates.TemplateResponse(request=request,name="movie_night/start.html",context={"profiles":profiles_service.list_profiles(db)})
 @router.post("")
-def create(viewers:list[int]=Form(...),moods:list[str]=Form(default=[]),runtime_max:str=Form(default=""),db:Session=Depends(get_db)):
-    night=service.create_night(db,viewers,moods,int(runtime_max) if runtime_max.isdigit() else None);return RedirectResponse(f"/filmavond/{night.id}",303)
+def create(viewers:list[int]=Form(...),moods:list[str]=Form(default=[]),runtime_max:str=Form(default=""),mode:str=Form(default="normal"),db:Session=Depends(get_db)):
+    night=service.create_night(db,viewers,moods,int(runtime_max) if runtime_max.isdigit() else None,mode);return RedirectResponse(f"/filmavond/{night.id}",303)
 @router.get("/{night_id}",response_class=HTMLResponse)
 def show(night_id:int,request:Request,db:Session=Depends(get_db)):
     night,viewers,candidates=service.get_night(db,night_id)

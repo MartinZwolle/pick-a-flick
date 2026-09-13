@@ -31,15 +31,21 @@ class TMDbProvider:
     def search_movies(self,query:str)->list[MovieSearchResult]:
         return self._results(self._get("/search/movie",{"query":query,"include_adult":str(self.settings.household.adult_content).lower(),
             "language":"nl-NL","region":self.settings.household.country}))
-    def discover_movies(self,*,page:int=1,genre_ids:list[int]|None=None,runtime_max:int|None=None,provider_ids:list[int]|None=None)->list[MovieSearchResult]:
+    def discover_movies(self,*,page:int=1,genre_ids:list[int]|None=None,runtime_max:int|None=None,
+                        provider_ids:list[int]|None=None,release_year_min:int|None=None,
+                        release_year_max:int|None=None,sort_by:str="popularity.desc",
+                        vote_count_min:int|None=None,vote_average_min:float|None=None)->list[MovieSearchResult]:
         p={"include_adult":str(self.settings.household.adult_content).lower(),"include_video":"false","language":"nl-NL",
            "region":self.settings.household.country,"watch_region":self.settings.household.country,
            "with_watch_monetization_types":"flatrate|rent",
-           "primary_release_date.gte":f"{self.settings.household.earliest_movie_year}-01-01",
-           "sort_by":"popularity.desc","page":page}
+           "primary_release_date.gte":f"{release_year_min or self.settings.household.earliest_movie_year}-01-01",
+           "sort_by":sort_by,"page":page}
+        if release_year_max: p["primary_release_date.lte"]=f"{release_year_max}-12-31"
         if genre_ids: p["with_genres"]="|".join(map(str,genre_ids))
         if provider_ids: p["with_watch_providers"]="|".join(map(str,provider_ids))
         if runtime_max: p["with_runtime.lte"]=runtime_max
+        if vote_count_min is not None: p["vote_count.gte"]=vote_count_min
+        if vote_average_min is not None: p["vote_average.gte"]=vote_average_min
         return self._results(self._get("/discover/movie",p))
     def list_movie_watch_providers(self)->list[dict]:
         payload=self._get("/watch/providers/movie",{"watch_region":self.settings.household.country,"language":"en-US"})

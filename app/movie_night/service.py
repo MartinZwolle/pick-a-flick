@@ -43,36 +43,152 @@ def _score(movie,gs,ac,ds,n):
     if ah: score+=min(sum(x[0] for x in ah[:2])*.3/max(n,1),3); reasons.append("Met "+", ".join(x[1] for x in ah[:2]))
     return round(score,2),reasons[:3]
 
-def create_night(db,profile_ids,moods,runtime_max):
-    night=MovieNight(moods=",".join(moods[:2]),runtime_max=runtime_max); db.add(night);db.flush()
-    for pid in sorted(set(profile_ids)):db.add(MovieNightViewer(movie_night_id=night.id,profile_id=pid))
-    db.commit();db.refresh(night); discover(db,night,profile_ids,moods,runtime_max); return night
+MODES={"normal","surprise","gems","era","rewatch"}
 
-def discover(db,night,ids,moods,runtime_max):
-    settings=get_settings(); provider=TMDbProvider(settings); gids=[]
+def create_night(db,profile_ids,moods,runtime_max,mode="normal"):
+    mode=mode if mode in MODES else "normal"
+    night=MovieNight(mode=mode,moods=",".join(moods[:2]),runtime_max=runtime_max)
+    db.add(night);db.flush()
+    for pid in sorted(set(profile_ids)):
+        db.add(MovieNightViewer(movie_night_id=night.id,profile_id=pid))
+    db.commit();db.refresh(night)
+    discover(db,night,profile_ids,moods,runtime_max,mode)
+    return night
+
+def _provider_ids(settings,provider):
+    wanted=set(settings.streaming.subscriptions)|set(settings.streaming.rental)
+    return [p["provider_id"] for p in provider.list_movie_watch_providers()
+            if provider_slug(p.get("provider_name","")) in wanted]
+
+def _era_window(db,ids,earliest):
+    from app.profiles.models import Profile
+    years=[p.birth_year for p in db.scalars(select(Profile).where(Profile.id.in_(ids))).all() if p.birth_year]
+    if not years:return earliest,None
+    # "Gemist uit mijn tijd": roughly the movie-forming years, from age 10 through 30.
+    return max(earliest,min(years)+10),max(years)+30
+
+def _candidate_ok(db,movie,ids,hard,group_veto,seen,mode):
+    if movie.id in hard or movie.id in group_veto:return False
+    if mode=="rewatch":
+        ratings=list(db.scalars(select(ProfileMovieRating).where(
+            ProfileMovieRating.profile_id.in_(ids),
+            ProfileMovieRating.movie_id==movie.id,
+            ProfileMovieRating.rewatchable.is_(True),
+        )).all())
+        return bool(ratings)
+    # Normal discovery modes prefer unseen for the whole group.
+    return len(seen.get(movie.id,set()))<len(set(ids))
+
+def _local_rewatch_candidates(db,ids):
+    rows=list(db.scalars(select(ProfileMovieRating).where(
+        ProfileMovieRating.profile_id.in_(ids),
+        ProfileMovieRating.rewatchable.is_(True),
+        ProfileMovieRating.veto.is_(False),
+    )).all())
+    movies={}
+    who=defaultdict(list)
+    for r in rows:
+        movies[r.movie_id]=r.movie
+        who[r.movie_id].append(r.profile_id)
+    return list(movies.values()),who
+
+def discover(db,night,ids,moods,runtime_max,mode="normal"):
+    settings=get_settings(); provider=TMDbProvider(settings)
+    gids=[]
     for m in moods[:2]:gids+=MOODS.get(m,[])
-    wanted_slugs=set(settings.streaming.subscriptions)|set(settings.streaming.rental)
-    provider_ids=[
-        p["provider_id"] for p in provider.list_movie_watch_providers()
-        if provider_slug(p.get("provider_name","")) in wanted_slugs
-    ]
-    gs,ac,ds,hard,seen=_taste(db,ids); gv={x.movie_id for x in db.scalars(select(GroupMovieVeto).where(GroupMovieVeto.viewer_key==viewer_key(ids))).all()}
-    found=[]; tmdb_seen=set()
-    for page in (1,2,3):
-        for hit in provider.discover_movies(page=page,genre_ids=list(dict.fromkeys(gids)) or None,runtime_max=runtime_max,provider_ids=provider_ids or None):
-            if hit.tmdb_id in tmdb_seen:continue
-            tmdb_seen.add(hit.tmdb_id); movie=catalog_service.get_or_fetch_movie(db,hit.tmdb_id)
+    gids=list(dict.fromkeys(gids))
+    pids=_provider_ids(settings,provider)
+    gs,ac,ds,hard,seen=_taste(db,ids)
+    gv={x.movie_id for x in db.scalars(select(GroupMovieVeto).where(
+        GroupMovieVeto.viewer_key==viewer_key(ids))).all()}
+
+    found=[]; movie_ids=set()
+
+    # Rewatch is intentionally local: only explicit personal rewatch signals qualify.
+    if mode=="rewatch":
+        movies,who=_local_rewatch_candidates(db,ids)
+        from app.profiles.models import Profile
+        names={p.id:p.name for p in db.scalars(select(Profile).where(Profile.id.in_(ids))).all()}
+        for movie in movies:
             if movie.id in hard or movie.id in gv:continue
-            if len(seen.get(movie.id,set()))==len(set(ids)):continue
+            if runtime_max and movie.runtime_minutes and movie.runtime_minutes>runtime_max:continue
             av=availability_service.get_for_movie(db,movie)
             if not(av.watchable_now or av.fallback_available):continue
             score,reasons=_score(movie,gs,ac,ds,len(set(ids)))
-            if not reasons:reasons=["Beschikbaar vanavond en buiten jullie bekende lijst"]
-            found.append((score,movie,reasons))
-            if len(found)>=20:break
-        if len(found)>=20:break
-    found.sort(key=lambda x:(-x[0],-(x[1].release_year or 0),x[1].title.lower()))
-    for score,movie,reasons in found:db.add(MovieNightCandidate(movie_night_id=night.id,movie_id=movie.id,score=score,reasons_json=json.dumps(reasons)))
+            marked=[names.get(pid,"Iemand") for pid in who[movie.id]]
+            reasons.insert(0,(", ".join(marked))+" wil deze nog eens zien")
+            found.append((score+4,movie,reasons[:3]))
+    else:
+        attempts=[]
+        common=dict(provider_ids=pids or None)
+        if mode=="gems":
+            attempts=[
+                dict(genre_ids=gids or None,runtime_max=runtime_max,sort_by="vote_average.desc",
+                     vote_count_min=250,vote_average_min=6.5,**common),
+                dict(genre_ids=gids or None,runtime_max=(runtime_max+20 if runtime_max else None),
+                     sort_by="vote_average.desc",vote_count_min=100,vote_average_min=6.2,**common),
+            ]
+        elif mode=="era":
+            ymin,ymax=_era_window(db,ids,settings.household.earliest_movie_year)
+            attempts=[
+                dict(genre_ids=gids or None,runtime_max=runtime_max,release_year_min=ymin,release_year_max=ymax,**common),
+                dict(genre_ids=gids[:1] or None,runtime_max=(runtime_max+20 if runtime_max else None),
+                     release_year_min=ymin,release_year_max=ymax,**common),
+            ]
+        elif mode=="surprise":
+            attempts=[
+                dict(genre_ids=None,runtime_max=runtime_max,sort_by="vote_average.desc",
+                     vote_count_min=100,**common),
+                dict(genre_ids=None,runtime_max=(runtime_max+20 if runtime_max else None),**common),
+            ]
+        else:
+            attempts=[
+                dict(genre_ids=gids or None,runtime_max=runtime_max,**common),
+                dict(genre_ids=gids or None,runtime_max=(runtime_max+20 if runtime_max else None),**common),
+                dict(genre_ids=gids[:1] or None,runtime_max=(runtime_max+20 if runtime_max else None),**common),
+            ]
+
+        relaxed_at=None
+        for attempt_no,kwargs in enumerate(attempts):
+            for page in (1,2,3):
+                for hit in provider.discover_movies(page=page,**kwargs):
+                    movie=catalog_service.get_or_fetch_movie(db,hit.tmdb_id)
+                    if movie.id in movie_ids:continue
+                    if not _candidate_ok(db,movie,ids,hard,gv,seen,mode):continue
+                    av=availability_service.get_for_movie(db,movie)
+                    if not(av.watchable_now or av.fallback_available):continue
+                    score,reasons=_score(movie,gs,ac,ds,len(set(ids)))
+                    if mode=="surprise":
+                        score=score*.45+1
+                        reasons=["Een bewuste stap buiten jullie vaste keuzes"]+(reasons[:2] if reasons else [])
+                    elif mode=="gems":
+                        score=score*.65+2
+                        reasons=["Een minder voor de hand liggende film met sterke publiekswaardering"]+(reasons[:2] if reasons else [])
+                    elif mode=="era":
+                        reasons=["Uit de filmjaren die bij jullie generatie passen"]+(reasons[:2] if reasons else [])
+                    if not reasons:reasons=["Beschikbaar vanavond en buiten jullie bekende lijst"]
+                    found.append((score,movie,reasons[:3]));movie_ids.add(movie.id)
+                    if attempt_no>0 and relaxed_at is None:relaxed_at=attempt_no
+                    if len(found)>=20:break
+                if len(found)>=20:break
+            if len(found)>=12:break
+
+        if relaxed_at:
+            if runtime_max:
+                night.relaxation_note="Niet genoeg perfecte matches; de speelduur is iets verruimd."
+            else:
+                night.relaxation_note="Niet genoeg perfecte matches; de zoekopdracht is iets verruimd."
+
+    # Surprise should not simply reproduce score order; deterministic shuffle by night/movie id.
+    if mode=="surprise":
+        found.sort(key=lambda x:((x[1].id*1103515245+night.id*12345)%2147483647,-x[0]))
+    elif mode=="gems":
+        found.sort(key=lambda x:(-x[0],x[1].title.lower()))
+    else:
+        found.sort(key=lambda x:(-x[0],-(x[1].release_year or 0),x[1].title.lower()))
+
+    for score,movie,reasons in found[:20]:
+        db.add(MovieNightCandidate(movie_night_id=night.id,movie_id=movie.id,score=score,reasons_json=json.dumps(reasons)))
     db.commit()
 
 def get_night(db,nid):

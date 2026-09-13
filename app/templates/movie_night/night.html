@@ -53,6 +53,8 @@
 
 {% elif state.current %}
 <section class="card-round">
+  {% if night.relaxation_note %}<div class="relaxation-note">↔️ {{ night.relaxation_note }}</div>{% endif %}
+  <p class="mode-label">{% if night.mode=='surprise' %}🎲 Verras ons{% elif night.mode=='gems' %}💎 Pareltjes{% elif night.mode=='era' %}📼 Gemist uit mijn tijd{% elif night.mode=='rewatch' %}🔁 Nog een keer{% else %}🎬 Filmavond{% endif %}</p>
   <div class="round-head">
     <div>
       <p class="eyebrow">Op de bank: {{ viewers | map(attribute='profile.name') | join(', ') }}</p>

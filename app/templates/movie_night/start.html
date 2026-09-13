@@ -1,6 +1,40 @@
-{% extends "base.html" %}{% block title %}Filmavond · Pick a Flick{% endblock %}{% block content %}
-<section class="hero compact"><p class="eyebrow">Filmavond</p><h1>Wie zitten er op de bank?</h1><p class="muted">Alleen films die voor jullie beschikbaar zijn.</p></section>
-<form class="night-form" method="post"><fieldset><legend>1. Kijkers</legend><div class="viewer-grid">{% for p in profiles %}<label class="viewer-card"><input type="checkbox" name="viewers" value="{{ p.id }}"><span>👤 <strong>{{ p.name }}</strong></span></label>{% endfor %}</div></fieldset>
-<fieldset><legend>2. Stemming <small>maximaal twee</small></legend><div class="mood-grid">{% for v,l in [('licht','☀️ Licht'),('spannend','😬 Spannend'),('actie','💥 Actie'),('slim','🧠 Slim'),('warm','❤️ Warm'),('donker','🌑 Donker')] %}<label><input type="checkbox" name="moods" value="{{ v }}"><span>{{ l }}</span></label>{% endfor %}</div><p class="muted">Niets kiezen = 🎲 Verras ons.</p></fieldset>
-<fieldset><legend>3. Hoe lang?</legend><select name="runtime_max"><option value="">Maakt niet uit</option><option value="100">Max 1u40</option><option value="120">Max 2 uur</option><option value="150">Max 2u30</option></select></fieldset>
-<button class="button primary big">🎬 Zoek films voor vanavond</button></form>{% endblock %}
+{% extends "base.html" %}
+{% block title %}Filmavond · Pick a Flick{% endblock %}
+{% block content %}
+<section class="hero compact">
+  <p class="eyebrow">Filmavond</p>
+  <h1>Wie zitten er op de bank?</h1>
+  <p class="muted">Kies hoe jullie vanavond willen zoeken. Alleen films die beschikbaar zijn komen langs.</p>
+</section>
+<form class="night-form" method="post">
+<fieldset>
+  <legend>1. Kijkers</legend>
+  <div class="viewer-grid">{% for p in profiles %}<label class="viewer-card"><input type="checkbox" name="viewers" value="{{ p.id }}"><span>👤 <strong>{{ p.name }}</strong></span></label>{% endfor %}</div>
+</fieldset>
+
+<fieldset>
+  <legend>2. Hoe zullen we zoeken?</legend>
+  <div class="mode-grid">
+    {% for v,icon,title,copy in [
+      ('normal','🎬','Gewoon filmavond','Smaak, stemming en beschikbaarheid in balans.'),
+      ('surprise','🎲','Verras ons','Bewust wat verder buiten jullie vaste keuzes.'),
+      ('gems','💎','Pareltjes','Sterke films die minder voor de hand liggen.'),
+      ('era','📼','Gemist uit mijn tijd','Films uit de jaren waarin jullie filmsmaak gevormd werd.'),
+      ('rewatch','🔁','Nog een keer','Alleen films die iemand als opnieuw kijken heeft gemarkeerd.')
+    ] %}
+    <label class="mode-card"><input type="radio" name="mode" value="{{ v }}" {% if v=='normal' %}checked{% endif %}>
+      <span><b>{{ icon }} {{ title }}</b><small>{{ copy }}</small></span>
+    </label>
+    {% endfor %}
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>3. Stemming <small>optioneel, maximaal twee</small></legend>
+  <div class="mood-grid">{% for v,l in [('licht','☀️ Licht'),('spannend','😬 Spannend'),('actie','💥 Actie'),('slim','🧠 Slim'),('warm','❤️ Warm'),('donker','🌑 Donker')] %}<label><input type="checkbox" name="moods" value="{{ v }}"><span>{{ l }}</span></label>{% endfor %}</div>
+</fieldset>
+
+<fieldset><legend>4. Hoe lang?</legend><select name="runtime_max"><option value="">Maakt niet uit</option><option value="100">Max 1u40</option><option value="120">Max 2 uur</option><option value="150">Max 2u30</option></select></fieldset>
+<button class="button primary big">🎬 Start de kaarten</button>
+</form>
+{% endblock %}

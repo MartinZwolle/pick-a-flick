@@ -189,3 +189,13 @@ input { width: 100%; font: inherit; color: var(--text); background: var(--bg); b
 .rating-pills span{display:block;padding:.65rem .8rem;border:1px solid var(--border);border-radius:11px;background:var(--panel)}
 .rating-pills input:checked+span{outline:2px solid var(--accent);background:var(--panel-2)}
 .feedback-flags{display:flex;gap:1rem;flex-wrap:wrap;margin-top:.9rem;color:var(--muted)}
+
+/* M9 — discovery modes + polished feedback toggles */
+.mode-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.65rem}
+.mode-card input{position:absolute;opacity:0}.mode-card>span{height:100%;display:block;padding:1rem;border:1px solid var(--border);border-radius:14px;background:var(--panel);cursor:pointer}
+.mode-card b,.mode-card small{display:block}.mode-card small{margin-top:.35rem;color:var(--muted);line-height:1.35}
+.mode-card input:checked+span{outline:2px solid var(--accent);background:var(--panel-2)}
+.mode-label{font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
+.relaxation-note{max-width:900px;padding:.65rem .8rem;margin-bottom:.8rem;border:1px solid var(--border);border-radius:11px;background:var(--panel);color:var(--muted);font-size:.85rem}
+.feedback-flags .flag-pill input{position:absolute;opacity:0}.feedback-flags .flag-pill span{display:block;padding:.6rem .8rem;border:1px solid var(--border);border-radius:11px;background:var(--panel);cursor:pointer;color:inherit}
+.feedback-flags .flag-pill input:checked+span{outline:2px solid var(--accent);background:var(--panel-2)}

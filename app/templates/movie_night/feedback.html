@@ -20,8 +20,8 @@
   </div>
 
   <div class="feedback-flags">
-    <label><input type="checkbox" name="rewatchable_{{ viewer.profile_id }}"> 🔁 Nog eens kijken</label>
-    <label><input type="checkbox" name="abandoned_{{ viewer.profile_id }}"> 🛑 Afgehaakt</label>
+    <label class="flag-pill"><input type="checkbox" name="rewatchable_{{ viewer.profile_id }}"><span>🔁 Nog eens kijken</span></label>
+    <label class="flag-pill"><input type="checkbox" name="abandoned_{{ viewer.profile_id }}"><span>🛑 Afgehaakt</span></label>
   </div>
 </fieldset>
 {% endfor %}

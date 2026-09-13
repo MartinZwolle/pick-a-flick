@@ -1,0 +1,12 @@
+Pick a Flick M9.2 — more discovery, less popularity
+
+- Normal Film Night no longer asks TMDb for popularity.desc.
+- Uses vote_average.desc with a modest vote-count floor: quality guard, not popularity ranking.
+- Searches up to six TMDb pages and builds a pool of up to 60 viable movies before local ranking.
+- The local taste score remains the main ranking signal.
+- Movies shown to the selected viewers in their last 3 movie nights receive a rotation penalty.
+- 'Nu niet' receives the strongest repeat penalty among dismissed candidates.
+- Finalists get only a light penalty, so a genuine contender can return.
+- Chosen movies get a strong repeat penalty; watched/seen filtering remains in force.
+- Gems / surprise / era keep their own semantics, but benefit from recent-candidate rotation.
+- No migration required. Apply over M9.1.

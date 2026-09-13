@@ -1,5 +1,84 @@
-{% extends "base.html" %}{% block title %}Filmavond · Pick a Flick{% endblock %}{% block content %}
-{% if selected %}<section class="chosen-film"><p class="eyebrow">🎬 Deze wordt het</p><h1>{{ selected.record.movie.title }}</h1>{% if selected.record.movie.poster_url %}<img src="{{ selected.record.movie.poster_url }}">{% endif %}<p>{{ selected.reasons|join(' · ') }}</p><a class="button" href="/filmavond">Nieuwe filmavond</a></section>
-{% else %}<section><p class="eyebrow">Op de bank: {{ viewers | map(attribute='profile.name') | join(', ') }}</p><h1>Dit zijn jullie kandidaten</h1><p class="muted">{{ candidates|length }} films gevonden. Kies zodra er eentje goed voelt.</p></section><div class="night-candidates">
-{% for item in candidates if item.record.decision not in ['never','skip'] %}<article class="night-card {% if item.record.decision in ['maybe','contender','surprise'] %}shortlisted{% endif %}">{% if item.record.movie.poster_url %}<img src="{{ item.record.movie.poster_url }}">{% endif %}<div class="night-card-copy"><h2>{{ item.record.movie.title }} <small>{{ item.record.movie.release_year or '' }}</small></h2><p>{{ item.record.movie.overview or '' }}</p><p class="chips">{% for g in item.record.movie.genres %}<span>{{ g.name }}</span>{% endfor %}</p><h3>Waarom deze?</h3><ul>{% for r in item.reasons %}<li>{{ r }}</li>{% endfor %}</ul><p class="watch-here">{% if item.availability.subscriptions %}✓ {{ item.availability.subscriptions|map(attribute='provider_name')|join(', ') }}{% elif item.availability.rentals %}Huur: {{ item.availability.rentals|map(attribute='provider_name')|join(', ') }}{% endif %}</p>
-<form method="post" action="/filmavond/{{ night.id }}/candidates/{{ item.record.id }}" class="decision-row"><button name="decision" value="never">🚫 Nooit</button><button name="decision" value="skip">⏭️ Nu niet</button><button name="decision" value="maybe">🤔 Misschien</button><button name="decision" value="contender">👍 Kanshebber</button><button name="decision" value="surprise">🎲 Vooruit</button><button class="choose" name="decision" value="choose">🎬 Deze wordt het</button></form></div></article>{% endfor %}</div>{% endif %}{% endblock %}
+{% extends "base.html" %}
+{% block title %}Filmavond · Pick a Flick{% endblock %}
+{% block content %}
+{% if selected %}
+<section class="chosen-film">
+  <p class="eyebrow">🎬 Deze wordt het</p>
+  <h1>{{ selected.record.movie.title }}</h1>
+  {% if selected.record.movie.poster_url %}<img src="{{ selected.record.movie.poster_url }}" alt="Poster {{ selected.record.movie.title }}">{% endif %}
+  <p>{{ selected.reasons|join(' · ') }}</p>
+  <a class="button" href="/filmavond">Nieuwe filmavond</a>
+</section>
+
+{% elif state.finished %}
+<section class="finale">
+  <p class="eyebrow">De shortlist</p>
+  <h1>Welke wordt het?</h1>
+  {% if state.finalists %}
+  <p class="muted">Jullie hielden {{ state.finalists|length }} film{% if state.finalists|length != 1 %}s{% endif %} over. Nu alleen nog kiezen.</p>
+  <div class="finalist-grid">
+  {% for item in state.finalists %}
+    <article class="finalist-card">
+      {% if item.record.movie.poster_url %}<img src="{{ item.record.movie.poster_url }}" alt="Poster {{ item.record.movie.title }}">{% endif %}
+      <div>
+        <h2>{{ item.record.movie.title }}</h2>
+        <p class="muted">{{ item.record.movie.release_year or '' }}{% if item.record.movie.runtime_minutes %} · {{ item.record.movie.runtime_minutes }} min{% endif %}</p>
+        <ul>{% for reason in item.reasons[:2] %}<li>{{ reason }}</li>{% endfor %}</ul>
+        <p class="watch-here">{% if item.availability.subscriptions %}✓ {{ item.availability.subscriptions|map(attribute='provider_name')|join(', ') }}{% elif item.availability.rentals %}Huur: {{ item.availability.rentals|map(attribute='provider_name')|join(', ') }}{% endif %}</p>
+        <form method="post" action="/filmavond/{{ night.id }}/candidates/{{ item.record.id }}">
+          <button class="button primary" name="decision" value="choose">🎬 Deze wordt het</button>
+        </form>
+      </div>
+    </article>
+  {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <strong>Niets overgebleven.</strong>
+    <p class="muted">Jullie hebben alle {{ state.total }} kandidaten weggestemd. Nieuwe ronde, nieuwe kansen.</p>
+    <a class="button primary" href="/filmavond">Nieuwe ronde</a>
+  </div>
+  {% endif %}
+</section>
+
+{% elif state.current %}
+<section class="card-round">
+  <div class="round-head">
+    <div>
+      <p class="eyebrow">Op de bank: {{ viewers | map(attribute='profile.name') | join(', ') }}</p>
+      <h1>Wat denken jullie hiervan?</h1>
+    </div>
+    <div class="round-progress">
+      <strong>{{ state.reviewed + 1 }}</strong> / {{ state.total }}
+      <small>{{ state.finalists|length }} van 4 kanshebbers</small>
+    </div>
+  </div>
+
+  {% set item=state.current %}
+  <article class="single-movie-card">
+    <div class="single-poster">
+      {% if item.record.movie.poster_url %}<img src="{{ item.record.movie.poster_url }}" alt="Poster {{ item.record.movie.title }}">{% else %}<div class="poster-placeholder large">🎬</div>{% endif %}
+    </div>
+    <div class="single-copy">
+      <h2>{{ item.record.movie.title }}</h2>
+      <p class="movie-meta">{{ item.record.movie.release_year or '' }}{% if item.record.movie.runtime_minutes %} · {{ item.record.movie.runtime_minutes }} min{% endif %}</p>
+      <p>{{ item.record.movie.overview or '' }}</p>
+      <p class="chips">{% for g in item.record.movie.genres %}<span>{{ g.name }}</span>{% endfor %}</p>
+      <h3>Waarom deze?</h3>
+      <ul>{% for reason in item.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+      <p class="watch-here">{% if item.availability.subscriptions %}✓ {{ item.availability.subscriptions|map(attribute='provider_name')|join(', ') }}{% elif item.availability.rentals %}Huur: {{ item.availability.rentals|map(attribute='provider_name')|join(', ') }}{% endif %}</p>
+    </div>
+  </article>
+
+  <form method="post" action="/filmavond/{{ night.id }}/candidates/{{ item.record.id }}" class="single-decisions">
+    <button name="decision" value="never">🚫<span>Nooit</span></button>
+    <button name="decision" value="skip">⏭️<span>Nu niet</span></button>
+    <button name="decision" value="maybe">🤔<span>Misschien</span></button>
+    <button name="decision" value="contender">👍<span>Kanshebber</span></button>
+    <button name="decision" value="surprise">🎲<span>Vooruit</span></button>
+    <button class="choose" name="decision" value="choose">🎬<span>Deze wordt het</span></button>
+  </form>
+  <p class="round-hint">Na 4 kanshebbers — of na de laatste kaart — gaan jullie naar de finale.</p>
+</section>
+{% endif %}
+{% endblock %}

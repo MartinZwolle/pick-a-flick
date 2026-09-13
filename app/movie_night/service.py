@@ -89,3 +89,21 @@ def decide(db,night,candidate,decision,ids):
             db.add(GroupMovieVeto(viewer_key=key,movie_id=candidate.movie_id))
     if decision=="choose":night.selected_movie_id=candidate.movie_id;night.status="selected"
     db.commit()
+
+
+FINALIST_DECISIONS={"maybe","contender","surprise"}
+DISMISSED_DECISIONS={"never","skip"}
+
+def round_state(candidates):
+    finalists=[c for c in candidates if c.record.decision in FINALIST_DECISIONS]
+    undecided=[c for c in candidates if c.record.decision is None]
+    current=undecided[0] if undecided and len(finalists)<4 else None
+    reviewed=sum(1 for c in candidates if c.record.decision is not None)
+    finished=(len(finalists)>=4) or (not undecided)
+    return {
+        "finalists": finalists,
+        "current": current,
+        "reviewed": reviewed,
+        "total": len(candidates),
+        "finished": finished,
+    }

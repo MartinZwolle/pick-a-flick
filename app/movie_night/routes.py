@@ -18,7 +18,9 @@ def show(night_id:int,request:Request,db:Session=Depends(get_db)):
     night,viewers,candidates=service.get_night(db,night_id)
     if not night:raise HTTPException(404,"Filmavond niet gevonden")
     selected=next((c for c in candidates if c.record.movie_id==night.selected_movie_id),None)
-    return templates.TemplateResponse(request=request,name="movie_night/night.html",context={"night":night,"viewers":viewers,"candidates":candidates,"selected":selected})
+    state=service.round_state(candidates)
+    return templates.TemplateResponse(request=request,name="movie_night/night.html",
+        context={"night":night,"viewers":viewers,"candidates":candidates,"selected":selected,"state":state})
 @router.post("/{night_id}/candidates/{candidate_id}")
 def decision(night_id:int,candidate_id:int,decision:str=Form(...),db:Session=Depends(get_db)):
     night,viewers,_=service.get_night(db,night_id);candidate=db.get(MovieNightCandidate,candidate_id)

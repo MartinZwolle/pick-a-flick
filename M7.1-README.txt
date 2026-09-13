@@ -1,0 +1,21 @@
+Pick a Flick M7.1 — zero-results fix
+
+Cause:
+M7 asked TMDb for the first ~40 popular streaming/rental movies across *all*
+Dutch providers, and only afterwards filtered those against the household's
+Netflix / Disney+ / Prime / Pathé configuration. That sample can legitimately
+collapse to zero.
+
+Fix:
+- resolve the configured household services against TMDb's current NL provider list
+- pass those provider IDs directly into TMDb discovery
+- expand discovery from 2 to 3 pages
+- combine multiple mood genre IDs with OR instead of AND
+
+No migration required.
+
+Install over M7:
+  git add app/providers/metadata/tmdb.py app/movie_night/service.py
+  git commit -m "Fix Film Night provider discovery"
+  git push origin main
+Then deploy in Komodo with Pre Build Images enabled.

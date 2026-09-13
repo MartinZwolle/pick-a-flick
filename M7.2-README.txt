@@ -1,0 +1,22 @@
+Pick a Flick M7.2 — card-by-card Film Night
+
+Changes the Film Night UX:
+- exactly one movie card is shown at a time
+- after each decision the next card appears
+- Misschien, Kanshebber and Verrassend/Vooruit enter the shortlist
+- Nooit and Nu niet disappear from the current round
+- after 4 shortlisted films, discovery stops and shows "Welke wordt het?"
+- if all candidates are reviewed earlier, the remaining shortlist is shown
+- "Deze wordt het" still ends immediately
+- if nothing survives, offer a new round
+- no database migration
+- includes the M7.1 provider-discovery fix
+- version 0.7.2
+
+Install over M7/M7.1:
+  git add .
+  git commit -m "Add card-by-card Film Night flow M7.2"
+  git push origin main
+Then Komodo Deploy with Pre Build Images enabled.
+
+M8 should be applied only after this update.

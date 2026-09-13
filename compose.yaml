@@ -1,7 +1,6 @@
 services:
   pick-a-flick:
     build: .
-    image: pick-a-flick:dev
     container_name: pick-a-flick
     restart: unless-stopped
     ports:

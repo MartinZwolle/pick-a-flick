@@ -92,7 +92,7 @@ def profile_taste_summary(db: Session, profile_id: int) -> dict:
 
     return {
         "genres": top(genre_scores, 5),
-        "directors": top(director_scores, 4),
+        "directors": top(director_scores, 6),
         "actors": top(actor_scores, 6),
     }
 

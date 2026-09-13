@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Smaaktest · {{ profile.name }} · Pick a Flick{% endblock %}
+{% block content %}
+<section class="onboarding-shell">
+  <div class="onboarding-top">
+    <div>
+      <p class="eyebrow">Smaaktest · {{ profile.name }}</p>
+      <h2>Ken je deze?</h2>
+    </div>
+    <div class="onboarding-progress">
+      Film {{ position }} van {{ total }}
+      <div class="progress-track"><span class="progress-bar" style="width: {{ progress }}%"></span></div>
+    </div>
+  </div>
+
+  <article class="anchor-card">
+    <div class="anchor-poster">
+      {% if movie.poster_url %}
+        <img src="{{ movie.poster_url }}" alt="Poster {{ movie.title }}">
+      {% else %}
+        <div class="poster-placeholder large">🎬</div>
+      {% endif %}
+    </div>
+    <div class="anchor-copy">
+      <p class="eyebrow">{{ movie.release_year or '' }}</p>
+      <h1>{{ movie.title }}</h1>
+      {% if movie.genres %}
+      <div class="chips">
+        {% for genre in movie.genres %}<span>{{ genre.name }}</span>{% endfor %}
+      </div>
+      {% endif %}
+      {% if movie.overview %}<p class="overview">{{ movie.overview }}</p>{% endif %}
+
+      <form class="anchor-rating" method="post" action="/onboarding/{{ profile.id }}/anchor/{{ movie.tmdb_id }}">
+        <button name="response" value="love" type="submit"><strong>❤️ Geweldig</strong><small>Echt mijn film</small></button>
+        <button name="response" value="like" type="submit"><strong>👍 Goed</strong><small>Met plezier gezien</small></button>
+        <button name="response" value="neutral" type="submit"><strong>😐 Mwah</strong><small>Niet goed, niet slecht</small></button>
+        <button name="response" value="dislike" type="submit"><strong>👎 Niet mijn ding</strong><small>Hier hoef je me niet snel mee te verleiden</small></button>
+        <button class="not-seen" name="response" value="not_seen" type="submit"><strong>Niet gezien</strong><small>Neutraal — dit zegt niets over je smaak</small></button>
+      </form>
+    </div>
+  </article>
+  <p class="onboarding-note">Je geboortejaar bepaalt alleen welke herkenbare films je hier ziet. Het wordt niet gebruikt om je smaak te voorspellen.</p>
+</section>
+{% endblock %}

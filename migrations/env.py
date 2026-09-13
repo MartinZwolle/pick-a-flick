@@ -1,20 +1,19 @@
 from __future__ import annotations
 
-import os
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from app.catalog.models import Movie, MovieCredit, MovieGenre, ProfileMovieRating  # noqa: F401
 from app.config import get_data_dir
 from app.database import Base
+from app.onboarding.models import ProfileOnboardingResponse  # noqa: F401
 from app.profiles.models import Profile  # noqa: F401
-from app.catalog.models import Movie, MovieCredit, MovieGenre, ProfileMovieRating  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
-
 config.set_main_option("sqlalchemy.url", f"sqlite:///{get_data_dir() / 'pickaflick.db'}")
 target_metadata = Base.metadata
 

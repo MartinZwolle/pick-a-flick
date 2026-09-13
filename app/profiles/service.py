@@ -15,7 +15,7 @@ def get_profile(db: Session, profile_id: int) -> Profile | None:
 
 
 def create_profile(db: Session, name: str, birth_year: int) -> Profile:
-    profile = Profile(name=name.strip(), birth_year=birth_year)
+    profile = Profile(name=name.strip(), birth_year=birth_year, onboarding_completed=False)
     db.add(profile)
     db.commit()
     db.refresh(profile)

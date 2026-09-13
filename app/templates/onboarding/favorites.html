@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Favorieten · {{ profile.name }} · Pick a Flick{% endblock %}
+{% block content %}
+<section class="onboarding-shell">
+  <p class="eyebrow">Smaaktest · laatste stap</p>
+  <h1>Welke films zijn écht van jou?</h1>
+  <p class="muted">Zoek minimaal {{ minimum }} absolute favorieten. {{ target }} is nog beter. Dit zijn sterke signalen voor Pick a Flick.</p>
+
+  <p class="favorite-counter">⭐ {{ favorites|length }} favoriet{% if favorites|length != 1 %}en{% endif %} toegevoegd</p>
+
+  {% if favorites %}
+  <div class="onboarding-favorites">
+    <div class="poster-strip">
+      {% for item in favorites %}
+      <div class="poster-tile">
+        {% if item.movie.poster_url %}<img src="{{ item.movie.poster_url }}" alt="Poster {{ item.movie.title }}">{% else %}<div class="poster-placeholder small">🎬</div>{% endif %}
+        <strong>{{ item.movie.title }}</strong>
+        <span>{{ item.movie.release_year or '' }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if favorites|length < target %}
+  <form class="search-form" method="get" action="/onboarding/{{ profile.id }}/favorites">
+    <input name="q" value="{{ query }}" placeholder="Zoek bijvoorbeeld The Big Lebowski" autofocus>
+    <button class="button primary" type="submit">Zoeken</button>
+  </form>
+
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  {% if query and not error %}
+    {% if results %}
+    <div class="favorite-search-results">
+      {% for movie in results %}
+      <article class="favorite-search-card">
+        {% if movie.poster_url %}<img src="{{ movie.poster_url }}" alt="Poster {{ movie.title }}" loading="lazy">{% else %}<div class="poster-placeholder">🎬</div>{% endif %}
+        <div>
+          <strong>{{ movie.title }}</strong>
+          <div class="muted">{{ movie.release_year or 'jaar onbekend' }}</div>
+        </div>
+        {% if movie.tmdb_id in favorite_tmdb_ids %}
+          <span class="muted">⭐ toegevoegd</span>
+        {% else %}
+        <form method="post" action="/onboarding/{{ profile.id }}/favorites/{{ movie.tmdb_id }}">
+          <input type="hidden" name="q" value="{{ query }}">
+          <button class="button" type="submit">⭐ Favoriet</button>
+        </form>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+      <div class="empty-state">Geen films gevonden voor “{{ query }}”.</div>
+    {% endif %}
+  {% endif %}
+  {% endif %}
+
+  <div class="finish-panel">
+    {% if favorites|length >= minimum %}
+      <h2>Mooi. We hebben iets om mee te werken.</h2>
+      <p class="muted">{% if favorites|length < target %}Je kunt nog {{ target - favorites|length }} favoriet{% if target - favorites|length != 1 %}en{% endif %} toevoegen, maar hoeft niet.{% else %}Dat is een stevige eerste smaakbasis.{% endif %}</p>
+      <form method="post" action="/onboarding/{{ profile.id }}/finish">
+        <button class="button primary" type="submit">Klaar — laat mijn filmsmaak zien</button>
+      </form>
+    {% else %}
+      <strong>Nog {{ minimum - favorites|length }} te gaan.</strong>
+      <p class="muted">Kies films waarvan je zonder nadenken zegt: ja, die.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

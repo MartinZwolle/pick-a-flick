@@ -13,16 +13,17 @@ from app.config import get_settings
 from app.database import get_db
 from app.observability.logging import configure_logging
 from app.observability.metrics import metrics_middleware
+from app.onboarding.routes import router as onboarding_router
 from app.profiles.routes import router as profiles_router
 
 settings = get_settings()
 configure_logging(settings.app.log_level)
-
-app = FastAPI(title=settings.app.name, version="0.2.0")
+app = FastAPI(title=settings.app.name, version="0.4.0")
 app.middleware("http")(metrics_middleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(profiles_router)
 app.include_router(catalog_router)
+app.include_router(onboarding_router)
 templates = Jinja2Templates(directory="app/templates")
 
 

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Smaaktest · Pick a Flick{% endblock %}
+{% block content %}
+<section class="empty-state">
+  <p class="eyebrow">Smaaktest</p>
+  <h1>TMDb werkt even niet mee.</h1>
+  <p>{{ error }}</p>
+  <a class="button primary" href="/onboarding/{{ profile.id }}">Opnieuw proberen</a>
+</section>
+{% endblock %}

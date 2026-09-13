@@ -4,8 +4,7 @@
 
 Pick a Flick is a self-hosted movie-night decision helper. It helps a household discover and choose a film together instead of endlessly browsing streaming catalogues.
 
-This repository currently contains **M0 + M1 + M2**:
-
+This repository currently contains **M0 through M4**:
 - FastAPI application
 - server-rendered mobile-first UI
 - SQLite persistence
@@ -13,7 +12,10 @@ This repository currently contains **M0 + M1 + M2**:
 - profile create/read/update/delete
 - TMDb movie search and details
 - local movie metadata cache (SQLite)
-- first personal taste signals: rating, favourite, rewatchable and veto
+- personal taste signals: rating, favourite, rewatchable and veto
+- deterministic, explainable taste summary for genres, actors and directors
+- taste onboarding with 20 age-relevant anchor films
+- 3–5 manually chosen absolute favourites after onboarding
 - structured JSON logging
 - `/health`
 - Prometheus `/metrics`
@@ -43,9 +45,20 @@ Set the v3 API key as:
 TMDB_API_KEY=your-key
 ```
 
-The key is a secret and must not be committed. The application caches only movies that are actually opened from search results; it does not mirror the TMDb catalogue.
+The key is a secret and must not be committed. The application caches only movies that are actually opened from search results or onboarding; it does not mirror the TMDb catalogue.
 
 Pick a Flick uses the TMDB API but is not endorsed or certified by TMDB.
+
+## Taste onboarding
+
+New profiles run through a short onboarding:
+1. Rate 20 recognizable anchor films with ❤️ / 👍 / 😐 / 👎 / not seen.
+2. Search for at least 3 (ideally 5) absolute favourites.
+3. Continue to the personal taste overview.
+
+Birth year only changes which anchor films are likely to be recognizable. It is not used as a taste signal. “Not seen” is neutral.
+
+Profiles that existed before M4 are automatically marked as already onboarded during migration.
 
 ## Persistent data
 
@@ -64,8 +77,8 @@ Profile and cached movie data live in SQLite and are managed from the web UI.
 - **M0** Runtime, persistence, health and metrics ✅
 - **M1** Profiles ✅
 - **M2** Catalog + TMDb adapter ✅
-- **M3** Richer ratings/taste model
-- **M4** Taste onboarding
+- **M3** Richer ratings/taste model ✅
+- **M4** Taste onboarding ✅
 - **M5** Streaming availability
 - **M6** Explainable recommender
 - **M7** Movie Night flow

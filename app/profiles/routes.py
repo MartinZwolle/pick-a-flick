@@ -70,7 +70,7 @@ def create_profile(
             },
             status_code=409,
         )
-    return RedirectResponse(url=f"/profiles/{profile.id}", status_code=303)
+    return RedirectResponse(url=f"/onboarding/{profile.id}", status_code=303)
 
 
 @router.get("/{profile_id}", response_class=HTMLResponse)
@@ -78,6 +78,9 @@ def profile_detail(profile_id: int, request: Request, db: Session = Depends(get_
     profile = service.get_profile(db, profile_id)
     if profile is None:
         raise HTTPException(status_code=404, detail="Profiel niet gevonden")
+
+    if not profile.onboarding_completed:
+        return RedirectResponse(url=f"/onboarding/{profile.id}", status_code=303)
 
     movie_ratings = list_profile_movies(db, profile.id)
     favorites = [item for item in movie_ratings if item.favorite and not item.veto]

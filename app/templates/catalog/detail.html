@@ -8,11 +8,7 @@
   <div>
     <p class="eyebrow">{% if rating %}Beoordeling van {{ profile.name }}{% else %}Film toevoegen aan {{ profile.name }}{% endif %}</p>
     <h1>{{ movie.title }}</h1>
-    <p class="muted">
-      {{ movie.release_year or '' }}
-      {% if movie.runtime_minutes %} · {{ movie.runtime_minutes }} min{% endif %}
-      {% if movie.original_language %} · {{ movie.original_language | upper }}{% endif %}
-    </p>
+    <p class="muted">{{ movie.release_year or '' }}{% if movie.runtime_minutes %} · {{ movie.runtime_minutes }} min{% endif %}{% if movie.original_language %} · {{ movie.original_language | upper }}{% endif %}</p>
     {% if movie.genres %}<p class="chips">{% for genre in movie.genres %}<span>{{ genre.name }}</span>{% endfor %}</p>{% endif %}
     {% if movie.overview %}<p class="overview">{{ movie.overview }}</p>{% endif %}
     {% set directors = movie.credits | selectattr('role_type', 'equalto', 'director') | list %}
@@ -20,16 +16,49 @@
     {% if directors %}<p><strong>Regie:</strong> {{ directors | map(attribute='name') | join(', ') }}</p>{% endif %}
     {% if actors %}<p><strong>Met:</strong> {{ actors[:3] | map(attribute='name') | join(', ') }}</p>{% endif %}
 
+    <section class="availability-panel">
+      <p class="eyebrow">Nu te kijken</p>
+      {% if availability.subscriptions %}
+        <h2>✓ Op een van jullie diensten</h2>
+        <div class="provider-row">
+          {% for item in availability.subscriptions %}
+          <div class="provider-badge">{% if item.logo_path %}<img src="https://image.tmdb.org/t/p/w92{{ item.logo_path }}" alt="">{% endif %}<span>{{ item.provider_name }}</span><small>abonnement</small></div>
+          {% endfor %}
+        </div>
+      {% elif availability.rentals or availability.purchases %}
+        <h2>Niet in abonnement, wel los te kijken</h2>
+      {% else %}
+        <h2>Niet gevonden op jullie diensten</h2>
+      {% endif %}
+
+      {% if availability.rentals or availability.purchases %}
+      <div class="provider-row">
+        {% for item in availability.rentals %}
+        <div class="provider-badge fallback">{% if item.logo_path %}<img src="https://image.tmdb.org/t/p/w92{{ item.logo_path }}" alt="">{% endif %}<span>{{ item.provider_name }}</span><small>huur</small></div>
+        {% endfor %}
+        {% for item in availability.purchases %}
+        <div class="provider-badge fallback">{% if item.logo_path %}<img src="https://image.tmdb.org/t/p/w92{{ item.logo_path }}" alt="">{% endif %}<span>{{ item.provider_name }}</span><small>koop</small></div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if availability.other_subscriptions %}
+      <details class="other-providers">
+        <summary>Ook beschikbaar op andere abonnementen</summary>
+        <p>{{ availability.other_subscriptions | map(attribute='provider_name') | join(', ') }}</p>
+      </details>
+      {% endif %}
+      {% if availability.stale %}<p class="availability-note">⚠ Laatst bekende beschikbaarheid — verversen lukte niet.</p>{% endif %}
+      {% if availability.source_link %}<p class="availability-note">Beschikbaarheidsdata via JustWatch. <a href="{{ availability.source_link }}" target="_blank" rel="noopener">Bekijk bron</a></p>{% else %}<p class="availability-note">Beschikbaarheidsdata via JustWatch.</p>{% endif %}
+    </section>
+
     <form class="rating-form" method="post" action="/movies/{{ movie.id }}/rate">
       <input type="hidden" name="profile_id" value="{{ profile.id }}">
       <fieldset>
         <legend>Wat vond {{ profile.name }} ervan?</legend>
         <div class="rating-options">
           {% for value, icon, label in [('-1','👎','Slecht'),('0','😐','Mwah'),('1','👍','Goed'),('2','❤️','Geweldig')] %}
-          <label class="rating-choice">
-            <input type="radio" name="rating" value="{{ value }}" {% if rating and rating.rating == value|int %}checked{% endif %}>
-            <span>{{ icon }}<small>{{ label }}</small></span>
-          </label>
+          <label class="rating-choice"><input type="radio" name="rating" value="{{ value }}" {% if rating and rating.rating == value|int %}checked{% endif %}><span>{{ icon }}<small>{{ label }}</small></span></label>
           {% endfor %}
         </div>
       </fieldset>
@@ -44,7 +73,6 @@
         {% if not rating %}<a class="button" href="/movies/search?profile_id={{ profile.id }}">Andere film zoeken</a>{% endif %}
       </div>
     </form>
-
     {% if rating %}
     <form class="remove-rating-form" method="post" action="/movies/{{ movie.id }}/remove-rating" onsubmit="return confirm('Deze film uit het profiel van {{ profile.name }} verwijderen?');">
       <input type="hidden" name="profile_id" value="{{ profile.id }}">

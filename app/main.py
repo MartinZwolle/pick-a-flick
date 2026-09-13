@@ -18,7 +18,7 @@ from app.profiles.routes import router as profiles_router
 
 settings = get_settings()
 configure_logging(settings.app.log_level)
-app = FastAPI(title=settings.app.name, version="0.4.0")
+app = FastAPI(title=settings.app.name, version="0.5.0")
 app.middleware("http")(metrics_middleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(profiles_router)

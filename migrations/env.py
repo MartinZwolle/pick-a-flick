@@ -6,6 +6,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.catalog.models import Movie, MovieCredit, MovieGenre, ProfileMovieRating  # noqa: F401
+from app.availability.models import MovieAvailabilityCache, MovieAvailabilityFetch  # noqa: F401
 from app.config import get_data_dir
 from app.database import Base
 from app.onboarding.models import ProfileOnboardingResponse  # noqa: F401

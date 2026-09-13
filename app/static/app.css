@@ -137,3 +137,16 @@ input { width: 100%; font: inherit; color: var(--text); background: var(--bg); b
   .favorite-search-card img { width: 64px; height: 96px; grid-row: 1 / span 2; }
   .favorite-search-card form { grid-column: 2; }
 }
+
+/* M5 — streaming availability */
+.availability-panel { margin: 1.5rem 0; padding: 1rem; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; }
+.availability-panel h2 { margin: .2rem 0 .8rem; font-size: 1.15rem; }
+.provider-row { display: flex; flex-wrap: wrap; gap: .6rem; }
+.provider-badge { display: grid; grid-template-columns: 34px auto; grid-template-rows: auto auto; column-gap: .55rem; align-items: center; padding: .45rem .65rem; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--border); }
+.provider-badge img { width: 34px; height: 34px; object-fit: cover; border-radius: 8px; grid-row: 1 / span 2; }
+.provider-badge span { font-weight: 700; font-size: .88rem; }
+.provider-badge small { color: var(--muted); }
+.provider-badge.fallback { border-style: dashed; }
+.other-providers { margin-top: .8rem; color: var(--muted); font-size: .88rem; }
+.availability-note { margin: .8rem 0 0; color: var(--muted); font-size: .78rem; }
+.availability-note a { text-decoration: underline; }

@@ -6,11 +6,40 @@
   <p class="eyebrow">Mijn filmsmaak</p>
   <h1>{{ profile.name }}</h1>
   <p>Geboren in {{ profile.birth_year }}</p>
-  <p class="muted">Favorieten, beoordelingen, rewatchables en smaakprofiel volgen in M3/M4.</p>
   <div class="actions">
-    <a class="button primary" href="/profiles/{{ profile.id }}/edit">Profiel bewerken</a>
+    <a class="button primary" href="/movies/search?profile_id={{ profile.id }}">🎬 Film toevoegen</a>
+    <a class="button" href="/profiles/{{ profile.id }}/edit">Profiel bewerken</a>
     <a class="button" href="/profiles">Terug</a>
   </div>
+
+  {% if movie_ratings %}
+  <section class="taste-section">
+    <h2>Mijn films</h2>
+    <div class="rated-list">
+      {% for item in movie_ratings %}
+      <a class="rated-movie" href="/movies/tmdb/{{ item.movie.tmdb_id }}?profile_id={{ profile.id }}">
+        {% if item.movie.poster_url %}<img src="{{ item.movie.poster_url }}" alt="Poster {{ item.movie.title }}" loading="lazy">{% else %}<div class="poster-placeholder small">🎬</div>{% endif %}
+        <div>
+          <strong>{{ item.movie.title }}</strong>
+          <span>{{ item.movie.release_year or '' }}</span>
+          <p>
+            {% if item.rating == -1 %}👎{% elif item.rating == 0 %}😐{% elif item.rating == 1 %}👍{% elif item.rating == 2 %}❤️{% else %}✓ Gezien{% endif %}
+            {% if item.favorite %} · ⭐ favoriet{% endif %}
+            {% if item.rewatchable %} · 🔁{% endif %}
+            {% if item.veto %} · 🚫{% endif %}
+          </p>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% else %}
+  <div class="empty-state compact">
+    <strong>Nog geen films toegevoegd.</strong>
+    <p class="muted">Zoek een film die je hebt gezien en geef Pick a Flick het eerste beetje smaakdata.</p>
+  </div>
+  {% endif %}
+
   <form method="post" action="/profiles/{{ profile.id }}/delete" onsubmit="return confirm('Profiel echt verwijderen?');">
     <button class="button danger" type="submit">Profiel verwijderen</button>
   </form>

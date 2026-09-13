@@ -9,6 +9,7 @@ from sqlalchemy import engine_from_config, pool
 from app.config import get_data_dir
 from app.database import Base
 from app.profiles.models import Profile  # noqa: F401
+from app.catalog.models import Movie, MovieCredit, MovieGenre, ProfileMovieRating  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:

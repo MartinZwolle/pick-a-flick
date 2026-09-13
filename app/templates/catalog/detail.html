@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ movie.title }} · Pick a Flick{% endblock %}
+{% block content %}
+<section class="movie-detail">
+  <div class="movie-detail-poster">
+    {% if movie.poster_url %}<img src="{{ movie.poster_url }}" alt="Poster {{ movie.title }}">{% else %}<div class="poster-placeholder large">🎬</div>{% endif %}
+  </div>
+  <div>
+    <p class="eyebrow">Film toevoegen aan {{ profile.name }}</p>
+    <h1>{{ movie.title }}</h1>
+    <p class="muted">
+      {{ movie.release_year or '' }}
+      {% if movie.runtime_minutes %} · {{ movie.runtime_minutes }} min{% endif %}
+      {% if movie.original_language %} · {{ movie.original_language | upper }}{% endif %}
+    </p>
+    {% if movie.genres %}<p class="chips">{% for genre in movie.genres %}<span>{{ genre.name }}</span>{% endfor %}</p>{% endif %}
+    {% if movie.overview %}<p class="overview">{{ movie.overview }}</p>{% endif %}
+    {% set directors = movie.credits | selectattr('role_type', 'equalto', 'director') | list %}
+    {% set actors = movie.credits | selectattr('role_type', 'equalto', 'actor') | list %}
+    {% if directors %}<p><strong>Regie:</strong> {{ directors | map(attribute='name') | join(', ') }}</p>{% endif %}
+    {% if actors %}<p><strong>Met:</strong> {{ actors[:3] | map(attribute='name') | join(', ') }}</p>{% endif %}
+
+    <form class="rating-form" method="post" action="/movies/{{ movie.id }}/rate">
+      <input type="hidden" name="profile_id" value="{{ profile.id }}">
+      <fieldset>
+        <legend>Wat vond {{ profile.name }} ervan?</legend>
+        <div class="rating-options">
+          {% for value, icon, label in [('-1','👎','Slecht'),('0','😐','Mwah'),('1','👍','Goed'),('2','❤️','Geweldig')] %}
+          <label class="rating-choice">
+            <input type="radio" name="rating" value="{{ value }}" {% if rating and rating.rating == value|int %}checked{% endif %}>
+            <span>{{ icon }}<small>{{ label }}</small></span>
+          </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <div class="toggle-list">
+        <label><input type="checkbox" name="favorite" {% if rating and rating.favorite %}checked{% endif %}> ⭐ Definieert mijn smaak / favoriet</label>
+        <label><input type="checkbox" name="rewatchable" {% if rating and rating.rewatchable %}checked{% endif %}> 🔁 Wil ik nog eens zien</label>
+        <label><input type="checkbox" name="veto" {% if rating and rating.veto %}checked{% endif %}> 🚫 Nooit meer voorstellen</label>
+      </div>
+      <div class="actions">
+        <button class="button primary" type="submit">Opslaan</button>
+        <a class="button" href="/movies/search?profile_id={{ profile.id }}">Andere film zoeken</a>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

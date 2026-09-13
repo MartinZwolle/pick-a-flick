@@ -8,6 +8,7 @@ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.catalog.routes import router as catalog_router
 from app.config import get_settings
 from app.database import get_db
 from app.observability.logging import configure_logging
@@ -17,10 +18,11 @@ from app.profiles.routes import router as profiles_router
 settings = get_settings()
 configure_logging(settings.app.log_level)
 
-app = FastAPI(title=settings.app.name, version="0.1.0")
+app = FastAPI(title=settings.app.name, version="0.2.0")
 app.middleware("http")(metrics_middleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(profiles_router)
+app.include_router(catalog_router)
 templates = Jinja2Templates(directory="app/templates")
 
 

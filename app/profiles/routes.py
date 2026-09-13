@@ -8,6 +8,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.catalog.service import list_profile_movies
 from app.database import get_db
 from app.profiles import service
 
@@ -81,7 +82,7 @@ def profile_detail(profile_id: int, request: Request, db: Session = Depends(get_
     return templates.TemplateResponse(
         request=request,
         name="profiles/detail.html",
-        context={"profile": profile},
+        context={"profile": profile, "movie_ratings": list_profile_movies(db, profile.id)},
     )
 
 

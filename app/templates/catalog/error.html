@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}TMDb-fout · Pick a Flick{% endblock %}
+{% block content %}
+<section class="empty-state">
+  <p class="eyebrow">Filmdata</p>
+  <h1>Dat ging niet goed</h1>
+  <p>{{ error }}</p>
+  <a class="button" href="/movies/search?profile_id={{ profile.id }}">Terug naar zoeken</a>
+</section>
+{% endblock %}

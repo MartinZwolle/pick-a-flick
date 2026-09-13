@@ -2,15 +2,18 @@
 
 > Stop scrolling. Start watching.
 
-Pick a Flick is a self-hosted movie-night decision helper. It is designed to help a household discover and choose a film together, rather than endlessly browse streaming catalogs.
+Pick a Flick is a self-hosted movie-night decision helper. It helps a household discover and choose a film together instead of endlessly browsing streaming catalogues.
 
-This repository currently contains the **M0 + M1 scaffold**:
+This repository currently contains **M0 + M1 + M2**:
 
 - FastAPI application
 - server-rendered mobile-first UI
 - SQLite persistence
 - Alembic migrations at startup
 - profile create/read/update/delete
+- TMDb movie search and details
+- local movie metadata cache (SQLite)
+- first personal taste signals: rating, favourite, rewatchable and veto
 - structured JSON logging
 - `/health`
 - Prometheus `/metrics`
@@ -22,6 +25,7 @@ This repository currently contains the **M0 + M1 scaffold**:
 cp config.example.yaml config.yaml
 cp .env.example .env
 mkdir -p data
+# Put your TMDb v3 API key in .env
 docker compose up -d --build
 ```
 
@@ -31,22 +35,36 @@ Health: `http://localhost:8089/health`
 
 Metrics: `http://localhost:8089/metrics`
 
+## TMDb
+
+Set the v3 API key as:
+
+```text
+TMDB_API_KEY=your-key
+```
+
+The key is a secret and must not be committed. The application caches only movies that are actually opened from search results; it does not mirror the TMDb catalogue.
+
+Pick a Flick uses the TMDB API but is not endorsed or certified by TMDB.
+
 ## Persistent data
 
-Everything persistent lives in `./data`. Back up that directory together with `config.yaml`.
+Everything persistent lives in `./data`. Back up that directory together with your installation configuration.
 
-The startup script makes `pickaflick.db.pre-migration.bak` before running migrations if a database already exists. This is only a migration safety copy, not a backup strategy.
+The startup script makes `pickaflick.db.pre-migration.bak` before running migrations when a database already exists. This is a migration safety copy, not a backup strategy.
 
 ## Configuration
 
 V1 household/system settings live in `config.yaml`. Secrets are read from environment variables; do not commit `.env`.
 
-Profile data lives in SQLite and is managed from the web UI.
+Profile and cached movie data live in SQLite and are managed from the web UI.
 
 ## Roadmap
 
-- **M2** Catalog + TMDb adapter
-- **M3** Ratings, favourites, rewatchable, veto
+- **M0** Runtime, persistence, health and metrics ✅
+- **M1** Profiles ✅
+- **M2** Catalog + TMDb adapter ✅
+- **M3** Richer ratings/taste model
 - **M4** Taste onboarding
 - **M5** Streaming availability
 - **M6** Explainable recommender
@@ -57,7 +75,7 @@ Profile data lives in SQLite and is managed from the web UI.
 
 ## Privacy
 
-Pick a Flick has no telemetry. It only talks to external services that are required for configured functionality.
+Pick a Flick has no telemetry. It only talks to external services required for configured functionality.
 
 ## License
 

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Film zoeken · {{ profile.name }} · Pick a Flick{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">{{ profile.name }} · Mijn filmsmaak</p>
+    <h1>Film toevoegen</h1>
+    <p class="muted">Zoek een film die je gezien hebt en vertel Pick a Flick wat je ervan vond.</p>
+  </div>
+  <a class="button" href="/profiles/{{ profile.id }}">Terug</a>
+</section>
+<form class="search-form" method="get" action="/movies/search">
+  <input type="hidden" name="profile_id" value="{{ profile.id }}">
+  <input name="q" value="{{ query }}" placeholder="Bijvoorbeeld Star Wars" autofocus>
+  <button class="button primary" type="submit">Zoeken</button>
+</form>
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
+{% if query and not error %}
+  {% if results %}
+  <div class="movie-grid">
+    {% for movie in results %}
+    <a class="movie-card" href="/movies/tmdb/{{ movie.tmdb_id }}?profile_id={{ profile.id }}">
+      {% if movie.poster_url %}<img src="{{ movie.poster_url }}" alt="Poster {{ movie.title }}" loading="lazy">{% else %}<div class="poster-placeholder">🎬</div>{% endif %}
+      <div class="movie-card-body">
+        <strong>{{ movie.title }}</strong>
+        <span>{{ movie.release_year or 'jaar onbekend' }}{% if movie.original_language %} · {{ movie.original_language | upper }}{% endif %}</span>
+        {% if movie.overview %}<p>{{ movie.overview[:150] }}{% if movie.overview|length > 150 %}…{% endif %}</p>{% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">Geen films gevonden voor “{{ query }}”.</div>
+  {% endif %}
+{% endif %}
+{% endblock %}

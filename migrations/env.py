@@ -44,3 +44,5 @@ else:
     run_migrations_online()
 
 from app.movie_night.models import MovieNight, MovieNightViewer, MovieNightCandidate, GroupMovieVeto  # noqa: F401
+
+from app.movie_night.models import WatchEvent, WatchParticipant  # noqa: F401

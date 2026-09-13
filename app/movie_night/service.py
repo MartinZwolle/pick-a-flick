@@ -5,9 +5,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.availability import service as availability_service
 from app.catalog import service as catalog_service
-from app.catalog.models import ProfileMovieRating
+from app.catalog.models import Movie,ProfileMovieRating
 from app.config import get_settings
-from app.movie_night.models import GroupMovieVeto,MovieNight,MovieNightCandidate,MovieNightViewer
+from app.movie_night.models import GroupMovieVeto,MovieNight,MovieNightCandidate,MovieNightViewer,WatchEvent,WatchParticipant
 from app.providers.metadata.tmdb import TMDbProvider
 from app.providers.availability.tmdb import provider_slug
 
@@ -107,3 +107,95 @@ def round_state(candidates):
         "total": len(candidates),
         "finished": finished,
     }
+
+
+def get_watch_event(db,night_id):
+    return db.scalar(select(WatchEvent).where(WatchEvent.movie_night_id==night_id))
+
+
+def mark_not_watched(db,night):
+    # No watch event and no taste signal.
+    night.status="not_watched"
+    db.commit()
+
+
+def _upsert_profile_feedback(db,profile_id,movie_id,rating,rewatchable,abandoned):
+    existing=db.scalar(select(ProfileMovieRating).where(
+        ProfileMovieRating.profile_id==profile_id,
+        ProfileMovieRating.movie_id==movie_id,
+    ))
+
+    if abandoned:
+        rating=-1
+
+    if existing is None:
+        existing=ProfileMovieRating(
+            profile_id=profile_id,
+            movie_id=movie_id,
+            rating=rating,
+            favorite=False,
+            rewatchable=rewatchable,
+            veto=False,
+        )
+        db.add(existing)
+    else:
+        if rating is not None:
+            existing.rating=rating
+        if rewatchable:
+            existing.rewatchable=True
+
+    return existing
+
+
+def save_post_watch_feedback(db,night,viewer_rows,feedback):
+    if night.selected_movie_id is None:
+        raise ValueError("Movie night has no selected movie")
+
+    event=get_watch_event(db,night.id)
+    if event is None:
+        event=WatchEvent(
+            movie_night_id=night.id,
+            movie_id=night.selected_movie_id,
+            status="watched",
+        )
+        db.add(event)
+        db.flush()
+
+    for viewer in viewer_rows:
+        data=feedback.get(viewer.profile_id,{})
+        raw_rating=data.get("rating")
+        abandoned=bool(data.get("abandoned",False))
+        rewatchable=bool(data.get("rewatchable",False)) and not abandoned
+        rating=-1 if abandoned else raw_rating
+
+        participant=db.scalar(select(WatchParticipant).where(
+            WatchParticipant.watch_event_id==event.id,
+            WatchParticipant.profile_id==viewer.profile_id,
+        ))
+        if participant is None:
+            participant=WatchParticipant(
+                watch_event_id=event.id,
+                profile_id=viewer.profile_id,
+            )
+            db.add(participant)
+
+        participant.rating=rating
+        participant.rewatchable=rewatchable
+        participant.abandoned=abandoned
+
+        # Blank feedback records attendance only and doesn't touch taste.
+        if rating is not None or rewatchable or abandoned:
+            _upsert_profile_feedback(
+                db,
+                viewer.profile_id,
+                night.selected_movie_id,
+                rating,
+                rewatchable,
+                abandoned,
+            )
+
+    event.status="watched"
+    night.status="watched"
+    db.commit()
+    db.refresh(event)
+    return event

@@ -7,7 +7,17 @@
   <h1>{{ selected.record.movie.title }}</h1>
   {% if selected.record.movie.poster_url %}<img src="{{ selected.record.movie.poster_url }}" alt="Poster {{ selected.record.movie.title }}">{% endif %}
   <p>{{ selected.reasons|join(' · ') }}</p>
+  {% if night.status == "watched" %}
+  <p class="success-note">✓ Feedback opgeslagen. Deze filmavond staat als gekeken geregistreerd.</p>
   <a class="button" href="/filmavond">Nieuwe filmavond</a>
+{% else %}
+  <div class="post-watch-actions">
+    <a class="button primary" href="/filmavond/{{ night.id }}/feedback">🍿 We hebben hem gekeken</a>
+    <form method="post" action="/filmavond/{{ night.id }}/not-watched">
+      <button class="button" type="submit">Toch niet gekeken</button>
+    </form>
+  </div>
+{% endif %}
 </section>
 
 {% elif state.finished %}

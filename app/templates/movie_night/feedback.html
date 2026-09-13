@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Na de film · Pick a Flick{% endblock %}
+{% block content %}
+<section>
+  <p class="eyebrow">Na de film</p>
+  <h1>Wat vonden jullie van {{ selected.record.movie.title if selected else "de film" }}?</h1>
+  <p class="muted">Iedereen apart. Dit voedt alleen het persoonlijke smaakprofiel van die kijker.</p>
+</section>
+
+<form method="post" class="feedback-form">
+{% for viewer in viewers %}
+<fieldset class="feedback-person">
+  <legend>{{ viewer.profile.name }}</legend>
+
+  <div class="rating-pills">
+    <label><input type="radio" name="rating_{{ viewer.profile_id }}" value="2"><span>❤️ Geweldig</span></label>
+    <label><input type="radio" name="rating_{{ viewer.profile_id }}" value="1"><span>👍 Leuk</span></label>
+    <label><input type="radio" name="rating_{{ viewer.profile_id }}" value="0"><span>😐 Mwah</span></label>
+    <label><input type="radio" name="rating_{{ viewer.profile_id }}" value="-1"><span>👎 Niet leuk</span></label>
+  </div>
+
+  <div class="feedback-flags">
+    <label><input type="checkbox" name="rewatchable_{{ viewer.profile_id }}"> 🔁 Nog eens kijken</label>
+    <label><input type="checkbox" name="abandoned_{{ viewer.profile_id }}"> 🛑 Afgehaakt</label>
+  </div>
+</fieldset>
+{% endfor %}
+
+<button class="button primary big" type="submit">Feedback opslaan</button>
+</form>
+{% endblock %}

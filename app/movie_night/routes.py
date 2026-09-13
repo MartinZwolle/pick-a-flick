@@ -26,3 +26,46 @@ def decision(night_id:int,candidate_id:int,decision:str=Form(...),db:Session=Dep
     night,viewers,_=service.get_night(db,night_id);candidate=db.get(MovieNightCandidate,candidate_id)
     if not night or not candidate or candidate.movie_night_id!=night_id:raise HTTPException(404)
     service.decide(db,night,candidate,decision,[v.profile_id for v in viewers]);return RedirectResponse(f"/filmavond/{night_id}",303)
+
+
+@router.get("/{night_id}/feedback",response_class=HTMLResponse)
+def feedback_form(night_id:int,request:Request,db:Session=Depends(get_db)):
+    night,viewers,candidates=service.get_night(db,night_id)
+    if not night or not night.selected_movie_id:
+        raise HTTPException(404,"Geen gekozen film voor deze filmavond")
+    selected=next((c for c in candidates if c.record.movie_id==night.selected_movie_id),None)
+    event=service.get_watch_event(db,night_id)
+    return templates.TemplateResponse(
+        request=request,
+        name="movie_night/feedback.html",
+        context={"night":night,"viewers":viewers,"selected":selected,"event":event},
+    )
+
+
+@router.post("/{night_id}/feedback")
+async def save_feedback(night_id:int,request:Request,db:Session=Depends(get_db)):
+    night,viewers,_=service.get_night(db,night_id)
+    if not night or not night.selected_movie_id:
+        raise HTTPException(404,"Geen gekozen film voor deze filmavond")
+
+    form=await request.form()
+    feedback={}
+    for viewer in viewers:
+        raw=form.get(f"rating_{viewer.profile_id}")
+        feedback[viewer.profile_id]={
+            "rating": int(raw) if raw in {"-1","0","1","2"} else None,
+            "rewatchable": form.get(f"rewatchable_{viewer.profile_id}")=="on",
+            "abandoned": form.get(f"abandoned_{viewer.profile_id}")=="on",
+        }
+
+    service.save_post_watch_feedback(db,night,viewers,feedback)
+    return RedirectResponse(f"/filmavond/{night_id}",status_code=303)
+
+
+@router.post("/{night_id}/not-watched")
+def not_watched(night_id:int,db:Session=Depends(get_db)):
+    night,_,_=service.get_night(db,night_id)
+    if not night:
+        raise HTTPException(404)
+    service.mark_not_watched(db,night)
+    return RedirectResponse("/filmavond",status_code=303)

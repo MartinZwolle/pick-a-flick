@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import DateTime,Float,ForeignKey,Integer,String,Text,UniqueConstraint,func
+from sqlalchemy import Boolean,DateTime,Float,ForeignKey,Integer,String,Text,UniqueConstraint,func
 from sqlalchemy.orm import Mapped,mapped_column,relationship
 from app.database import Base
 
@@ -35,3 +35,28 @@ class GroupMovieVeto(Base):
     viewer_key:Mapped[str]=mapped_column(String(200),nullable=False,index=True)
     movie_id:Mapped[int]=mapped_column(ForeignKey("movies.id",ondelete="CASCADE"),nullable=False)
     created_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now())
+
+
+class WatchEvent(Base):
+    __tablename__="watch_events"
+    __table_args__=(UniqueConstraint("movie_night_id",name="uq_watch_event_movie_night"),)
+    id:Mapped[int]=mapped_column(Integer,primary_key=True)
+    movie_night_id:Mapped[int|None]=mapped_column(ForeignKey("movie_nights.id",ondelete="SET NULL"))
+    movie_id:Mapped[int]=mapped_column(ForeignKey("movies.id",ondelete="CASCADE"),nullable=False)
+    status:Mapped[str]=mapped_column(String(20),nullable=False,default="watched")
+    watched_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),server_default=func.now())
+    movie=relationship("Movie",lazy="joined")
+    participants=relationship("WatchParticipant",back_populates="event",cascade="all, delete-orphan",lazy="selectin")
+
+
+class WatchParticipant(Base):
+    __tablename__="watch_participants"
+    __table_args__=(UniqueConstraint("watch_event_id","profile_id",name="uq_watch_participant"),)
+    id:Mapped[int]=mapped_column(Integer,primary_key=True)
+    watch_event_id:Mapped[int]=mapped_column(ForeignKey("watch_events.id",ondelete="CASCADE"),nullable=False)
+    profile_id:Mapped[int]=mapped_column(ForeignKey("profiles.id",ondelete="CASCADE"),nullable=False)
+    rating:Mapped[int|None]=mapped_column(Integer)
+    rewatchable:Mapped[bool]=mapped_column(Boolean,nullable=False,default=False)
+    abandoned:Mapped[bool]=mapped_column(Boolean,nullable=False,default=False)
+    event=relationship("WatchEvent",back_populates="participants")
+    profile=relationship("Profile",lazy="joined")

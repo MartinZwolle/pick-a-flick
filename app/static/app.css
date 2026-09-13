@@ -176,3 +176,16 @@ input { width: 100%; font: inherit; color: var(--text); background: var(--bg); b
 .single-decisions button span{font-size:.7rem}.single-decisions .choose{background:var(--accent);color:#111;font-weight:800}.round-hint{max-width:900px;text-align:center;color:var(--muted);font-size:.8rem}
 .finalist-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1rem;margin-top:1.2rem}.finalist-card{border:1px solid var(--border);background:var(--panel);border-radius:18px;overflow:hidden}.finalist-card>img{width:100%;aspect-ratio:2/3;object-fit:cover}.finalist-card>div{padding:1rem}.finalist-card h2{font-size:1.1rem;margin:0}
 @media(max-width:650px){.single-movie-card{grid-template-columns:115px 1fr}.single-poster img{min-height:173px}.single-copy{padding:.8rem}.single-copy h2{font-size:1.25rem}.single-copy>p:not(.movie-meta):not(.watch-here),.single-copy ul,.single-copy h3,.single-copy .chips{display:none}.single-decisions{grid-template-columns:repeat(3,1fr)}.round-head{align-items:start}.finalist-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* M8 — post-watch feedback */
+.post-watch-actions{display:flex;justify-content:center;gap:.65rem;flex-wrap:wrap;margin-top:1rem}
+.post-watch-actions form{margin:0}
+.success-note{padding:.75rem 1rem;border:1px solid var(--border);border-radius:12px;background:var(--panel)}
+.feedback-form{display:grid;gap:1rem;max-width:760px}
+.feedback-person{border:1px solid var(--border);border-radius:16px;padding:1rem}
+.feedback-person legend{font-weight:800;padding:0 .4rem}
+.rating-pills{display:flex;gap:.55rem;flex-wrap:wrap}
+.rating-pills input{position:absolute;opacity:0}
+.rating-pills span{display:block;padding:.65rem .8rem;border:1px solid var(--border);border-radius:11px;background:var(--panel)}
+.rating-pills input:checked+span{outline:2px solid var(--accent);background:var(--panel-2)}
+.feedback-flags{display:flex;gap:1rem;flex-wrap:wrap;margin-top:.9rem;color:var(--muted)}

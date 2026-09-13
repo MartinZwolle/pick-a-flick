@@ -16,16 +16,18 @@ from app.observability.metrics import metrics_middleware
 from app.onboarding.routes import router as onboarding_router
 from app.profiles.routes import router as profiles_router
 from app.recommendations.routes import router as recommendations_router
+from app.movie_night.routes import router as movie_night_router
 
 settings = get_settings()
 configure_logging(settings.app.log_level)
-app = FastAPI(title=settings.app.name, version="0.6.0")
+app = FastAPI(title=settings.app.name, version="0.7.0")
 app.middleware("http")(metrics_middleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(profiles_router)
 app.include_router(catalog_router)
 app.include_router(onboarding_router)
 app.include_router(recommendations_router)
+app.include_router(movie_night_router)
 templates = Jinja2Templates(directory="app/templates")
 
 

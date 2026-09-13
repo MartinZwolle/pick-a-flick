@@ -1,0 +1,22 @@
+services:
+  pick-a-flick:
+    build: .
+    image: pick-a-flick:dev
+    container_name: pick-a-flick
+    restart: unless-stopped
+    ports:
+      - "8089:8000"
+    environment:
+      PICKAFLICK_CONFIG: /config/config.yaml
+      PICKAFLICK_DATA_DIR: /data
+    env_file:
+      - .env
+    volumes:
+      - ./config.yaml:/config/config.yaml:ro
+      - ./data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

@@ -1,0 +1,45 @@
+app:
+  name: "Pick a Flick"
+  host: "0.0.0.0"
+  port: 8000
+  log_level: "INFO"
+
+household:
+  country: "NL"
+  earliest_movie_year: 1977
+  adult_content: false
+
+languages:
+  preferred:
+    - "en"
+  allowed:
+    - "en"
+    - "nl"
+    - "fr"
+    - "de"
+
+providers:
+  metadata:
+    primary: "tmdb"
+  availability:
+    primary: "tmdb"
+
+streaming:
+  subscriptions:
+    - "netflix"
+    - "disney_plus"
+    - "prime_video"
+  rental:
+    - "pathe_thuis"
+
+recommendations:
+  boost_expiring_titles: false
+
+ai:
+  enabled: false
+  provider: "openai_compatible"
+  base_url: null
+  api_key_env: "PICKAFLICK_AI_API_KEY"
+
+tmdb:
+  api_key_env: "TMDB_API_KEY"

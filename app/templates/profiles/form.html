@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{% if profile %}Profiel bewerken{% else %}Profiel toevoegen{% endif %} · Pick a Flick{% endblock %}
+{% block content %}
+<section class="form-card">
+  <p class="eyebrow">Profiel</p>
+  <h1>{% if profile %}{{ profile.name }} bewerken{% else %}Nieuw profiel{% endif %}</h1>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <form method="post">
+    <label>Naam
+      <input name="name" required maxlength="80" value="{{ profile.name if profile else '' }}" autocomplete="off">
+    </label>
+    <label>Geboortejaar
+      <input name="birth_year" required type="number" min="1900" max="{{ current_year }}" value="{{ profile.birth_year if profile else '' }}">
+    </label>
+    <div class="actions">
+      <button class="button primary" type="submit">Opslaan</button>
+      <a class="button" href="/profiles">Annuleren</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

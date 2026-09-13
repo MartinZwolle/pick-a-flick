@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ profile.name }} · Pick a Flick{% endblock %}
+{% block content %}
+<section class="profile-detail">
+  <div class="avatar large">{{ profile.name[0] | upper }}</div>
+  <p class="eyebrow">Mijn filmsmaak</p>
+  <h1>{{ profile.name }}</h1>
+  <p>Geboren in {{ profile.birth_year }}</p>
+  <p class="muted">Favorieten, beoordelingen, rewatchables en smaakprofiel volgen in M3/M4.</p>
+  <div class="actions">
+    <a class="button primary" href="/profiles/{{ profile.id }}/edit">Profiel bewerken</a>
+    <a class="button" href="/profiles">Terug</a>
+  </div>
+  <form method="post" action="/profiles/{{ profile.id }}/delete" onsubmit="return confirm('Profiel echt verwijderen?');">
+    <button class="button danger" type="submit">Profiel verwijderen</button>
+  </form>
+</section>
+{% endblock %}

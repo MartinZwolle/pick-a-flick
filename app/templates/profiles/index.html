@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Profielen · Pick a Flick{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">Profielen</p>
+    <h1>Wie kijkt er mee?</h1>
+  </div>
+  <a class="button primary" href="/profiles/new">+ Profiel toevoegen</a>
+</div>
+
+{% if profiles %}
+<div class="profile-grid">
+  {% for profile in profiles %}
+  <a class="profile-card" href="/profiles/{{ profile.id }}">
+    <div class="avatar">{{ profile.name[0] | upper }}</div>
+    <strong>{{ profile.name }}</strong>
+    <span>{{ profile.birth_year }}</span>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<section class="empty-state">
+  <h2>Nog geen profielen</h2>
+  <p>Maak het eerste profiel aan. In M4 volgt hierna meteen de smaak-onboarding.</p>
+  <a class="button primary" href="/profiles/new">Eerste profiel maken</a>
+</section>
+{% endif %}
+{% endblock %}

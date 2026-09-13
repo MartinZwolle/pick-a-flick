@@ -9,6 +9,7 @@ from app.catalog.models import ProfileMovieRating
 from app.config import get_settings
 from app.movie_night.models import GroupMovieVeto,MovieNight,MovieNightCandidate,MovieNightViewer
 from app.providers.metadata.tmdb import TMDbProvider
+from app.providers.availability.tmdb import provider_slug
 
 MOODS={"licht":[35,10749],"spannend":[53,9648],"actie":[28,12],"slim":[878,9648],"warm":[18,10751],"donker":[53,80,27]}
 @dataclass
@@ -48,12 +49,17 @@ def create_night(db,profile_ids,moods,runtime_max):
     db.commit();db.refresh(night); discover(db,night,profile_ids,moods,runtime_max); return night
 
 def discover(db,night,ids,moods,runtime_max):
-    provider=TMDbProvider(get_settings()); gids=[]
+    settings=get_settings(); provider=TMDbProvider(settings); gids=[]
     for m in moods[:2]:gids+=MOODS.get(m,[])
+    wanted_slugs=set(settings.streaming.subscriptions)|set(settings.streaming.rental)
+    provider_ids=[
+        p["provider_id"] for p in provider.list_movie_watch_providers()
+        if provider_slug(p.get("provider_name","")) in wanted_slugs
+    ]
     gs,ac,ds,hard,seen=_taste(db,ids); gv={x.movie_id for x in db.scalars(select(GroupMovieVeto).where(GroupMovieVeto.viewer_key==viewer_key(ids))).all()}
     found=[]; tmdb_seen=set()
-    for page in (1,2):
-        for hit in provider.discover_movies(page=page,genre_ids=list(dict.fromkeys(gids)) or None,runtime_max=runtime_max):
+    for page in (1,2,3):
+        for hit in provider.discover_movies(page=page,genre_ids=list(dict.fromkeys(gids)) or None,runtime_max=runtime_max,provider_ids=provider_ids or None):
             if hit.tmdb_id in tmdb_seen:continue
             tmdb_seen.add(hit.tmdb_id); movie=catalog_service.get_or_fetch_movie(db,hit.tmdb_id)
             if movie.id in hard or movie.id in gv:continue

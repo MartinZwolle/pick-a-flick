@@ -31,15 +31,20 @@ class TMDbProvider:
     def search_movies(self,query:str)->list[MovieSearchResult]:
         return self._results(self._get("/search/movie",{"query":query,"include_adult":str(self.settings.household.adult_content).lower(),
             "language":"nl-NL","region":self.settings.household.country}))
-    def discover_movies(self,*,page:int=1,genre_ids:list[int]|None=None,runtime_max:int|None=None)->list[MovieSearchResult]:
+    def discover_movies(self,*,page:int=1,genre_ids:list[int]|None=None,runtime_max:int|None=None,provider_ids:list[int]|None=None)->list[MovieSearchResult]:
         p={"include_adult":str(self.settings.household.adult_content).lower(),"include_video":"false","language":"nl-NL",
            "region":self.settings.household.country,"watch_region":self.settings.household.country,
            "with_watch_monetization_types":"flatrate|rent",
            "primary_release_date.gte":f"{self.settings.household.earliest_movie_year}-01-01",
            "sort_by":"popularity.desc","page":page}
-        if genre_ids: p["with_genres"]=",".join(map(str,genre_ids))
+        if genre_ids: p["with_genres"]="|".join(map(str,genre_ids))
+        if provider_ids: p["with_watch_providers"]="|".join(map(str,provider_ids))
         if runtime_max: p["with_runtime.lte"]=runtime_max
         return self._results(self._get("/discover/movie",p))
+    def list_movie_watch_providers(self)->list[dict]:
+        payload=self._get("/watch/providers/movie",{"watch_region":self.settings.household.country,"language":"en-US"})
+        return payload.get("results",[])
+
     def get_movie(self,external_id:int)->MovieDetails:
         item=self._get(f"/movie/{external_id}",{"append_to_response":"credits","language":"nl-NL"})
         rd=item.get("release_date") or None

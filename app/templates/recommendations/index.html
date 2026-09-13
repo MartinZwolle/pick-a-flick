@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Voor {{ profile.name }} · Pick a Flick{% endblock %}
+{% block content %}
+<section>
+  <p class="eyebrow">Eerste aanbevelingen</p>
+  <h1>Dit zou {{ profile.name }} wel eens leuk kunnen vinden</h1>
+  <p class="muted">Alleen films die Pick a Flick al kent. De score is lokaal en uitlegbaar: genres, regisseurs en acteurs uit je eigen smaakprofiel.</p>
+  {% if results %}
+  <div class="recommendation-grid">
+    {% for rec, availability in results %}
+    <article class="recommendation-card">
+      <a href="/movies/tmdb/{{ rec.movie.tmdb_id }}?profile_id={{ profile.id }}">
+        {% if rec.movie.poster_url %}<img src="{{ rec.movie.poster_url }}" alt="Poster {{ rec.movie.title }}">{% else %}<div class="poster-placeholder large">🎬</div>{% endif %}
+      </a>
+      <div class="recommendation-copy">
+        <div class="recommendation-score">{{ "%.1f"|format(rec.score) }}</div>
+        <h2><a href="/movies/tmdb/{{ rec.movie.tmdb_id }}?profile_id={{ profile.id }}">{{ rec.movie.title }}</a></h2>
+        <p class="muted">{{ rec.movie.release_year or '' }}{% if rec.movie.runtime_minutes %} · {{ rec.movie.runtime_minutes }} min{% endif %}</p>
+        <h3>Waarom deze?</h3>
+        <ul>{% for reason in rec.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+        <div class="watch-here">
+          {% if availability.subscriptions %}
+            <strong>✓ In je abonnement:</strong> {{ availability.subscriptions | map(attribute='provider_name') | join(', ') }}
+          {% elif availability.rentals %}
+            <strong>Te huur:</strong> {{ availability.rentals | map(attribute='provider_name') | join(', ') }}
+          {% elif availability.purchases %}
+            <strong>Te koop:</strong> {{ availability.purchases | map(attribute='provider_name') | join(', ') }}
+          {% endif %}
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <strong>Nog te weinig ontdekkingsmateriaal.</strong>
+    <p class="muted">Pick a Flick kan nu al uitleggen wat bij je past, maar kent lokaal nog geen ongeziene film die ook op jullie diensten beschikbaar is. M7 gaat de catalogus actief voor Filmavond vullen.</p>
+  </div>
+  {% endif %}
+  <div class="actions"><a class="button" href="/profiles/{{ profile.id }}">Terug naar mijn filmsmaak</a></div>
+</section>
+{% endblock %}

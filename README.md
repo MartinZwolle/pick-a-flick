@@ -4,7 +4,7 @@
 
 Pick a Flick is a self-hosted movie-night decision helper. It helps a household discover and choose a film together instead of endlessly browsing streaming catalogues.
 
-This repository currently contains **M0 through M5**:
+This repository currently contains **M0 through M6**:
 - FastAPI application
 - server-rendered mobile-first UI
 - SQLite persistence
@@ -81,7 +81,7 @@ Profile and cached movie data live in SQLite and are managed from the web UI.
 - **M3** Richer ratings/taste model ✅
 - **M4** Taste onboarding ✅
 - **M5** Streaming availability ✅
-- **M6** Explainable recommender
+- **M6** Explainable recommender ✅
 - **M7** Movie Night flow
 - **M8** Post-watch feedback
 - **M9** Surprise / Hidden Gems / Missed My Era / Rewatch modes

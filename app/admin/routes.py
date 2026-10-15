@@ -78,7 +78,7 @@ def login(request: Request):
 def sign_in(request: Request, csrf: str = Form(...), password: str = Form(...)):
     value, _ = security.authenticate(token(request), csrf, password)
     response = RedirectResponse("/admin/settings", 303)
-    set_cookie(response, value, authenticated=True)
+    set_cookie(response, value, request, authenticated=True)
     return response
 
 

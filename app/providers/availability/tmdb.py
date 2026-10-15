@@ -6,7 +6,6 @@ from app.config import Settings
 from app.providers.availability.base import AvailabilityItem, MovieAvailability
 from app.providers.metadata.tmdb import TMDbProvider
 
-
 PROVIDER_ALIASES = {
     "netflix": {"netflix", "netflix basic with ads", "netflix standard with ads"},
     "disney_plus": {"disney plus", "disney+"},

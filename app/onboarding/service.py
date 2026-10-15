@@ -11,7 +11,6 @@ from app.catalog.models import ProfileMovieRating
 from app.onboarding.models import ProfileOnboardingResponse
 from app.profiles.models import Profile
 
-
 ANCHOR_COUNT = 20
 MIN_FAVORITES = 3
 TARGET_FAVORITES = 5

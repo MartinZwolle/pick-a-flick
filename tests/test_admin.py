@@ -280,3 +280,64 @@ def test_upgrade_preserves_profiles_and_yaml(tmp_path, monkeypatch):
                    check=True, capture_output=True)
     with sqlite3.connect(tmp_path / "pickaflick.db") as db:
         assert db.execute("SELECT name FROM profiles").fetchone()[0] == "Existing viewer"
+
+
+def test_non_ascii_csrf_fails_closed(configured):
+    configured.get("/admin/login")
+    assert configured.post("/admin/login",
+                           data={"csrf": "é" * 43, "password": PASSWORD}).status_code == 403
+
+
+def test_login_form_expires(configured, environment):
+    import time
+    form = configured.get("/admin/login")
+    with sqlite3.connect(environment / "pickaflick.db") as db:
+        db.execute("UPDATE admin_sessions SET created=?", (time.time() - 601,))
+    assert configured.post("/admin/login", data={
+        "csrf": csrf(form), "password": PASSWORD,
+    }).status_code == 401
+
+
+def test_all_web_fields_and_environment_secrets(configured, monkeypatch):
+    from app.config import get_settings
+    monkeypatch.setenv("TMDB_API_KEY", "environment-only-test-key")
+    login(configured)
+    changes = {
+        "country": "BE", "preferred": "nl", "allowed": "nl, en",
+        "subscriptions": "", "rental": "pathe_thuis",
+        "earliest_movie_year": "1990", "adult_content": "true",
+    }
+    data = settings_data(configured, override=list(changes), **changes)
+    assert configured.post("/admin/settings", data=data,
+                           follow_redirects=False).status_code == 303
+    settings = get_settings()
+    assert settings.household.country == "BE"
+    assert settings.household.earliest_movie_year == 1990
+    assert settings.household.adult_content is True
+    assert settings.languages.preferred == ["nl"]
+    assert settings.languages.allowed == ["nl", "en"]
+    assert settings.streaming.subscriptions == []
+    assert settings.streaming.rental == ["pathe_thuis"]
+    assert settings.tmdb_api_key == "environment-only-test-key"
+    assert "environment-only-test-key" not in configured.get("/admin/settings").text
+
+
+def test_wrong_current_password_preserves_sessions(configured):
+    login(configured)
+    page = configured.get("/admin/password")
+    response = configured.post("/admin/password", data={
+        "csrf": csrf(page), "old_password": "wrong",
+        "new_password": NEW_PASSWORD, "confirmation": NEW_PASSWORD,
+    })
+    assert response.status_code == 400
+    assert configured.get("/admin/settings").status_code == 200
+
+
+def test_cli_requires_interactive_terminal(environment):
+    result = subprocess.run(
+        [sys.executable, "-m", "app.admin.cli", "set-password"],
+        input=PASSWORD, text=True, capture_output=True,
+    )
+    assert result.returncode == 1
+    assert "interactieve terminal" in result.stderr
+    assert PASSWORD not in result.stderr + result.stdout

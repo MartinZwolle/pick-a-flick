@@ -58,7 +58,9 @@ def _session(db, token, now, authenticated=False, csrf=None):
         or (authenticated and not row["authenticated"])
     ):
         raise AdminError("Log opnieuw in.", 401)
-    if csrf is not None and not secrets.compare_digest(row["csrf"], csrf):
+    if csrf is not None and (
+        len(csrf) != 43 or not secrets.compare_digest(row["csrf"].encode(), csrf.encode())
+    ):
         raise AdminError("Ongeldig formulier. Laad de pagina opnieuw.", 403)
     db.execute("UPDATE admin_sessions SET last_seen=? WHERE token_hash=?",
                (now, digest(token)))

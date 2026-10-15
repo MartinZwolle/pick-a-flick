@@ -75,7 +75,7 @@ published version to `.env` (the example below is not a promise that this
 version already exists):
 
 ```dotenv
-PICKAFLICK_VERSION=0.10.0
+PICKAFLICK_VERSION=0.10.1
 ```
 
 Use the standalone registry Compose file for every command:
@@ -111,8 +111,8 @@ commit on `main`, a maintainer can create and push a new release tag:
 ```bash
 git checkout main
 git pull --ff-only
-git tag v0.10.0
-git push origin v0.10.0
+git tag v0.10.1
+git push origin v0.10.1
 ```
 
 Choose an unused version; the commands above are examples. Tagging is a
@@ -159,8 +159,11 @@ Back up `./data` and your local configuration securely. Do not commit real crede
 
 M11 was merged in [PR #4](https://github.com/MartinZwolle/pick-a-flick/pull/4).
 The instructions below apply to the source on `main` and images built from it;
-the published v0.9.0 release predates M11. Merging does not publish a new image
-or update an existing installation.
+v0.9.0 predates M11, while v0.10.0 contains an HTTP admin-login bug fixed in
+[PR #7](https://github.com/MartinZwolle/pick-a-flick/pull/7). For HTTP administration,
+use v0.10.1 or later once published, or build from main with the fix.
+See [the v0.10.1 notes](docs/releases/v0.10.1.md). Merging does not publish a new
+image or update an existing installation.
 
 Admin is optional for ordinary household use. There is one administrator; no
 registration, roles or separate viewer accounts. Open **Beheer** to manage country,

@@ -69,10 +69,11 @@ The Compose file publishes port 8089 on the host and mounts `config.yaml` read-o
 
 ## Prebuilt GHCR image
 
-After a version has been published, you can run it without building locally.
-Prepare `config.yaml`, `.env` and `data` as described above, then add a
-published version to `.env` (the example below is not a promise that this
-version already exists):
+[v0.10.1](https://github.com/MartinZwolle/pick-a-flick/releases/tag/v0.10.1)
+is published, including the HTTP admin-login fix. The container image is
+`ghcr.io/martinzwolle/pick-a-flick:0.10.1`.
+Prepare `config.yaml`, `.env` and `data` as described above, then select the
+published version in `.env`:
 
 ```dotenv
 PICKAFLICK_VERSION=0.10.1
@@ -105,19 +106,11 @@ tag formats are rejected. There are no `main`, `latest`, major or minor
 aliases. Treat published version tags as immutable: never move or reuse a
 release tag. For strict deployment pinning, use the image digest shown in GHCR.
 
-After merging the workflow PR and reviewing the green CI for the intended
-commit on `main`, a maintainer can create and push a new release tag:
-
-```bash
-git checkout main
-git pull --ff-only
-git tag v0.10.1
-git push origin v0.10.1
-```
-
-Choose an unused version; the commands above are examples. Tagging is a
-separate release action, not part of merging this change. Check the Container
-workflow and the repository's Packages page after publishing.
+After reviewing green CI for the intended commit on `main`, create and push a
+**new, unused** stable release tag matching `vMAJOR.MINOR.PATCH`.
+**v0.10.1 is already published: do not recreate, move or reuse that tag.**
+Tagging is a separate release action; merging a PR does not publish an image.
+Check the Container workflow and the repository's Packages page after publishing.
 
 Authentication uses the automatic `GITHUB_TOKEN`; no personal access token
 or repository secret is needed for publishing. Only the publish job has
@@ -161,7 +154,7 @@ M11 was merged in [PR #4](https://github.com/MartinZwolle/pick-a-flick/pull/4).
 The instructions below apply to the source on `main` and images built from it;
 v0.9.0 predates M11, while v0.10.0 contains an HTTP admin-login bug fixed in
 [PR #7](https://github.com/MartinZwolle/pick-a-flick/pull/7). For HTTP administration,
-use v0.10.1 or later once published, or build from main with the fix.
+use the published v0.10.1 release or build from main with the fix.
 See [the v0.10.1 notes](docs/releases/v0.10.1.md). Merging does not publish a new
 image or update an existing installation.
 

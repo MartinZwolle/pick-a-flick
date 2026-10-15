@@ -14,6 +14,7 @@ Pick a Flick is a self-hosted movie-night decision helper. Instead of endlessly 
 - **Discovery:** try Surprise, Hidden Gems, Missed My Era or Rewatch modes.
 - **After watching:** record whether you watched the film and let each participant rate it separately.
 - **Explainable recommendations:** local taste-based ranking, without requiring an LLM.
+- **Admin configuration:** one admin login for household settings, with local password setup/recovery and web overrides that preserve the YAML configuration.
 
 Pick a Flick is a single-household application. Admin login protects configuration only; viewer profiles and movie nights have no individual account login. Protect the entire deployment with an access-control layer if you expose it outside your trusted network.
 
@@ -156,6 +157,11 @@ Back up `./data` and your local configuration securely. Do not commit real crede
 
 ## Admin setup and web configuration
 
+M11 was merged in [PR #4](https://github.com/MartinZwolle/pick-a-flick/pull/4).
+The instructions below apply to the source on `main` and images built from it;
+the published v0.9.0 release predates M11. Merging does not publish a new image
+or update an existing installation.
+
 Admin is optional for ordinary household use. There is one administrator; no
 registration, roles or separate viewer accounts. Open **Beheer** to manage country,
 languages, streaming subscriptions, rental providers, earliest movie year and adult
@@ -243,7 +249,7 @@ Pick a Flick does not send application telemetry to its author. It does make ext
 - **M7–M8:** movie-night flow and post-watch feedback — complete
 - **M9:** discovery modes and recommendation refinements — complete
 - **M10:** documentation, installation validation, screenshots, CI, container publishing and release preparation — complete
-- **M11:** admin login and configuration UI — implemented; awaiting review
+- **M11:** admin login and configuration UI — complete; merged in [PR #4](https://github.com/MartinZwolle/pick-a-flick/pull/4)
 - **M12 (planned):** natural-language movie discovery with optional LLM suggestions
 - **M13 (planned):** scheduling and Telegram notifications
 - **M14 (planned):** further stabilization and public release

@@ -9,17 +9,18 @@ naar het configuratiebestand. Gebruik komma’s tussen talen of providercodes.</
 <p>Voorbeelden: land NL; talen en, nl; providers netflix, disney_plus, prime_video,
 pathe_thuis, hbo_max, videoland, skyshowtime, apple_tv_plus, npo_plus.
 Andere diensten gebruiken hun naam in kleine letters met underscores.</p>
-<form method="post" action="/admin/settings">
+<form class="form-card night-form" method="post" action="/admin/settings">
   <input type="hidden" name="csrf" value="{{ csrf }}">
   <input type="hidden" name="revision" value="{{ revision }}">
   {% for name, info in fields.items() %}
   <fieldset>
     <legend>{{ info[0] }}</legend>
-    <label><input type="checkbox" name="override" value="{{ name }}"
-           {% if name in overrides %}checked{% endif %}> Via web beheren</label>
+    <div class="toggle-list"><label><input type="checkbox" name="override" value="{{ name }}"
+           {% if name in overrides %}checked{% endif %}> Via web beheren</label></div>
     <p>Bron: {% if name in overrides %}webinstelling{% else %}configuratiebestand{% endif %}.
        Waarde in configuratiebestand:
        {% if name in lists %}{{ base[name]|join(', ') }}{% elif name == 'adult_content' %}{{ 'Ja' if base[name] else 'Nee' }}{% else %}{{ base[name] }}{% endif %}</p>
+    {% if name in ['preferred', 'allowed'] %}<p>Deze taalwaarden worden bewaard. De huidige filmzoekfunctie gebruikt ze nog niet als taalfilter.</p>{% endif %}
     <label for="{{ name }}">Waarde voor {{ info[0]|lower }}</label>
     {% if name == 'adult_content' %}
     <select id="{{ name }}" name="{{ name }}">

@@ -336,7 +336,7 @@ def test_wrong_current_password_preserves_sessions(configured):
 def test_cli_requires_interactive_terminal(environment):
     result = subprocess.run(
         [sys.executable, "-m", "app.admin.cli", "set-password"],
-        input=PASSWORD, text=True, capture_output=True,
+        check=False, input=PASSWORD, text=True, capture_output=True,
     )
     assert result.returncode == 1
     assert "interactieve terminal" in result.stderr

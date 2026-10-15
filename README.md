@@ -161,6 +161,10 @@ registration, roles or separate viewer accounts. Open **Beheer** to manage count
 languages, streaming subscriptions, rental providers, earliest movie year and adult
 content. API keys remain in `.env`.
 
+Existing limitation: the movie search/recommender does not yet use preferred/allowed
+language values as filters. M11 stores and exposes these settings without changing
+movie ranking; the admin page explains this.
+
 After startup migrations, create the admin password interactively:
 
 ```bash

@@ -341,3 +341,40 @@ def test_cli_requires_interactive_terminal(environment):
     assert result.returncode == 1
     assert "interactieve terminal" in result.stderr
     assert PASSWORD not in result.stderr + result.stdout
+
+
+@pytest.mark.parametrize("base_url,http", [
+    ("http://homelab:8089", True),
+    ("https://homelab:8443", False),
+])
+def test_browser_origin_login_and_settings(configured, monkeypatch, base_url, http):
+    from app.main import app
+    if http:
+        monkeypatch.setenv("PICKAFLICK_ADMIN_ALLOW_HTTP", "true")
+    with TestClient(app, base_url=base_url) as browser:
+        form = browser.get("/admin/login")
+        assert form.headers["referrer-policy"] == "same-origin"
+        response = browser.post(
+            "/admin/login", headers={"Origin": base_url},
+            data={"csrf": csrf(form), "password": PASSWORD}, follow_redirects=False,
+        )
+        assert response.status_code == 303
+        page = browser.get("/admin/settings")
+        assert page.status_code == 200
+        assert browser.post(
+            "/admin/settings", headers={"Origin": base_url},
+            data=settings_data(browser), follow_redirects=False,
+        ).status_code == 303
+
+
+@pytest.mark.parametrize("origin", ["null", "http://evil.example", "http://homelab:8090"])
+def test_http_foreign_or_null_origin_still_rejected(configured, monkeypatch, origin):
+    from app.main import app
+    monkeypatch.setenv("PICKAFLICK_ADMIN_ALLOW_HTTP", "true")
+    with TestClient(app, base_url="http://homelab:8089") as browser:
+        page = browser.get("/admin/login")
+        response = browser.post(
+            "/admin/login", headers={"Origin": origin},
+            data={"csrf": csrf(page), "password": PASSWORD}, follow_redirects=False,
+        )
+        assert response.status_code == 403

@@ -8,6 +8,9 @@ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.admin.routes import router as admin_router
+from app.admin.routes import templates as admin_templates
+from app.admin.security import AdminError
 from app.catalog.routes import router as catalog_router
 from app.config import get_settings
 from app.database import get_db
@@ -23,6 +26,7 @@ configure_logging(settings.app.log_level)
 app = FastAPI(title=settings.app.name, version="0.9.0")
 app.middleware("http")(metrics_middleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.include_router(admin_router)
 app.include_router(profiles_router)
 app.include_router(catalog_router)
 app.include_router(onboarding_router)
@@ -45,3 +49,31 @@ def health(db: Session = Depends(get_db)):
 @app.get("/metrics", include_in_schema=False)
 def metrics():
     return PlainTextResponse(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+
+
+@app.exception_handler(AdminError)
+async def admin_error(request: Request, exc: AdminError):
+    response = admin_templates.TemplateResponse(
+        request=request, name="admin/error.html",
+        context={"message": exc.message}, status_code=exc.status,
+    )
+    if exc.status == 429:
+        response.headers["Retry-After"] = "900"
+    return response
+
+
+@app.middleware("http")
+async def admin_headers(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path == "/admin" or request.url.path.startswith("/admin/"):
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; img-src 'self' https:; "
+            "form-action 'self'; frame-ancestors 'none'; base-uri 'none'"
+        )
+    return response

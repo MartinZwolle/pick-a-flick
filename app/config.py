@@ -85,7 +85,7 @@ def _load_yaml(path: Path) -> dict[str, Any]:
 
 
 @lru_cache(maxsize=1)
-def get_settings() -> Settings:
+def get_base_settings() -> Settings:
     path = Path(os.getenv("PICKAFLICK_CONFIG", "config.yaml"))
     return Settings.model_validate(_load_yaml(path))
 
@@ -94,3 +94,9 @@ def get_data_dir() -> Path:
     path = Path(os.getenv("PICKAFLICK_DATA_DIR", "./data"))
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def get_settings() -> Settings:
+    """Read web overrides afresh, so all workers see committed changes."""
+    from app.admin.settings import effective_settings
+    return effective_settings(get_base_settings())

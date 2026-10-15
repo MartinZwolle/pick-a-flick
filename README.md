@@ -15,7 +15,7 @@ Pick a Flick is a self-hosted movie-night decision helper. Instead of endlessly 
 - **After watching:** record whether you watched the film and let each participant rate it separately.
 - **Explainable recommendations:** local taste-based ranking, without requiring an LLM.
 
-Pick a Flick is a single-household application. This release has no individual account login or built-in admin login; protect your deployment with an access-control layer if you expose it outside your trusted network.
+Pick a Flick is a single-household application. Admin login protects configuration only; viewer profiles and movie nights have no individual account login. Protect the entire deployment with an access-control layer if you expose it outside your trusted network.
 
 ## Requirements
 
@@ -63,7 +63,7 @@ docker compose logs -f pick-a-flick
 
 The Compose file publishes port 8089 on the host and mounts `config.yaml` read-only and `./data` persistently.
 
-**Security:** no application-level login is provided in this release. Do not publish the app or `/metrics` directly to the internet without appropriate access controls.
+**Security:** admin login protects only `/admin`. Movie-night features, profiles and `/metrics` remain accessible without login. Do not publish the app directly to the internet without appropriate access controls.
 
 
 ## Prebuilt GHCR image
@@ -153,6 +153,78 @@ A film-specific personal veto is a hard exclusion for that viewer. Group feedbac
 
 Back up `./data` and your local configuration securely. Do not commit real credentials, personal profiles or database files.
 
+
+## Admin setup and web configuration
+
+Admin is optional for ordinary household use. There is one administrator; no
+registration, roles or separate viewer accounts. Open **Beheer** to manage country,
+languages, streaming subscriptions, rental providers, earliest movie year and adult
+content. API keys remain in `.env`.
+
+Existing limitation: the movie search/recommender does not yet use preferred/allowed
+language values as filters. M11 stores and exposes these settings without changing
+movie ranking; the admin page explains this.
+
+After startup migrations, create the admin password interactively:
+
+```bash
+docker compose exec pick-a-flick python -m app.admin.cli set-password
+```
+
+For a registry deployment, use `docker compose -f compose.ghcr.yaml exec` instead.
+Enter a password of 15–128 characters twice. Only a salted Argon2id hash is stored
+in the persistent database. Do not put the password in shell arguments or `.env`.
+
+**HTTPS is required for administration by default.** With a reverse proxy, restrict
+direct access to the application and configure Uvicorn's `FORWARDED_ALLOW_IPS` to
+trust only that proxy's address. Do not blindly trust forwarded headers from all clients.
+
+For direct HTTP access on your **trusted home network**, explicitly add this to
+`.env` and recreate the app container using your chosen Compose file:
+
+```dotenv
+PICKAFLICK_ADMIN_ALLOW_HTTP=true
+```
+
+For the local-build variant:
+
+```bash
+docker compose up -d
+```
+
+HTTP sends the admin password and session without transport encryption. Keep this
+exception limited to your trusted network. HTTPS connections still get Secure cookies.
+
+Open `/admin/login`. Sessions end after 30 minutes idle or 12 hours total.
+Five password attempts in 15 minutes trigger a 15-minute cooldown across browsers.
+Change your password in the web interface; this logs out every admin session.
+If you forget it, reset it locally:
+
+```bash
+docker compose exec pick-a-flick python -m app.admin.cli reset-password
+```
+
+Reset also ends all sessions and clears the login cooldown. These commands require
+the same persistent data volume as the running app. There is no public setup/reset page.
+
+### Configuration precedence and upgrades
+
+`config.yaml` stays read-only and supplies the base values. In the web interface,
+check **Via web beheren** for each field you want to override. Overrides are stored
+transactionally in SQLite and take effect on new requests across workers.
+Uncheck a field to return it to the YAML value. A conflicting save from an older
+browser tab asks you to reload. Existing film-night candidates are retained.
+
+Back up the SQLite database consistently while writes are stopped, together with
+`config.yaml` and `.env`, before upgrading from v0.9.0. Migration 0008 adds admin
+and settings tables without changing household data. No default password or web
+override is created. Ordinary use works before setting up admin.
+
+To roll back safely, stop the new version, restore the pre-upgrade backup and start
+the previous pinned image. Do not run old and new versions against the same database.
+Restoring only an image does not restore web settings or reverse a migration.
+See [the M11 design and verification notes](docs/M11.md) for details.
+
 ## External data and privacy
 
 Film metadata and watch-provider availability come from TMDb; watch-provider information is powered by JustWatch. Availability can change and should be verified on the streaming service before playback.
@@ -170,8 +242,8 @@ Pick a Flick does not send application telemetry to its author. It does make ext
 - **M5–M6:** streaming availability and explainable recommender — complete
 - **M7–M8:** movie-night flow and post-watch feedback — complete
 - **M9:** discovery modes and recommendation refinements — complete
-- **M10:** documentation, installation validation, screenshots, CI, container publishing and release preparation — in progress
-- **M11 (planned):** admin login and configuration UI
+- **M10:** documentation, installation validation, screenshots, CI, container publishing and release preparation — complete
+- **M11:** admin login and configuration UI — implemented; awaiting review
 - **M12 (planned):** natural-language movie discovery with optional LLM suggestions
 - **M13 (planned):** scheduling and Telegram notifications
 - **M14 (planned):** further stabilization and public release

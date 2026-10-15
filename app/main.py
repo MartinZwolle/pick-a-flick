@@ -8,7 +8,8 @@ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.admin.routes import router as admin_router, templates as admin_templates
+from app.admin.routes import router as admin_router
+from app.admin.routes import templates as admin_templates
 from app.admin.security import AdminError
 from app.catalog.routes import router as catalog_router
 from app.config import get_settings

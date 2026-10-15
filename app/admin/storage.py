@@ -1,6 +1,6 @@
 """Small SQLite transactions shared by web workers and the offline command."""
-from contextlib import contextmanager
 import sqlite3
+from contextlib import contextmanager
 
 from app.config import get_data_dir
 

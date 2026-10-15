@@ -199,3 +199,8 @@ input { width: 100%; font: inherit; color: var(--text); background: var(--bg); b
 .relaxation-note{max-width:900px;padding:.65rem .8rem;margin-bottom:.8rem;border:1px solid var(--border);border-radius:11px;background:var(--panel);color:var(--muted);font-size:.85rem}
 .feedback-flags .flag-pill input{position:absolute;opacity:0}.feedback-flags .flag-pill span{display:block;padding:.6rem .8rem;border:1px solid var(--border);border-radius:11px;background:var(--panel);cursor:pointer;color:inherit}
 .feedback-flags .flag-pill input:checked+span{outline:2px solid var(--accent);background:var(--panel-2)}
+
+.film-reel { display: inline-block; font-size: 3rem; animation: film-spin 2s linear infinite; }
+@keyframes film-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .film-reel { animation: none; } }
+textarea { width: 100%; max-width: 44rem; font: inherit; }

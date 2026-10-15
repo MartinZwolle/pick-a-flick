@@ -10,6 +10,10 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from app.config import Settings, get_data_dir
 
 FIELDS = {
+    "ai_enabled": ("AI-filmkenner actief", "ai.enabled"),
+    "ai_provider": ("AI-provider", "ai.provider"),
+    "ai_model": ("AI-model", "ai.model"),
+    "ai_base_url": ("AI-serveradres (optioneel)", "ai.base_url"),
     "country": ("Land", "household.country"),
     "preferred": ("Voorkeurstalen", "languages.preferred"),
     "allowed": ("Toegestane talen", "languages.allowed"),
@@ -30,6 +34,10 @@ class WebSettings(BaseModel):
     rental: list[str] = Field(max_length=50)
     earliest_movie_year: int = Field(ge=1874)
     adult_content: bool
+    ai_enabled: bool = False
+    ai_provider: str = "openai_compatible"
+    ai_model: str = "gpt-4.1-mini"
+    ai_base_url: str | None = None
 
     @field_validator("country")
     @classmethod

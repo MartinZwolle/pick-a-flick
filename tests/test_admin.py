@@ -378,3 +378,72 @@ def test_http_foreign_or_null_origin_still_rejected(configured, monkeypatch, ori
             data={"csrf": csrf(page), "password": PASSWORD}, follow_redirects=False,
         )
         assert response.status_code == 403
+
+
+def test_ai_web_settings_secrets_and_reset(configured, monkeypatch):
+    from app.config import get_settings
+    from app.movie_night import routes
+    monkeypatch.setattr(routes.profiles_service, 'list_profiles', lambda db: [])
+    monkeypatch.setenv('PICKAFLICK_AI_API_KEY', 'never-render-this-key')
+    login(configured)
+    changes = {'ai_enabled':'true', 'ai_provider':'ollama', 'ai_model':'qwen3:8b',
+               'ai_base_url':'http://ollama:11434'}
+    response = configured.post('/admin/settings', data=settings_data(
+        configured, override=list(changes), **changes), follow_redirects=False)
+    assert response.status_code == 303
+    assert get_settings().ai.enabled is True
+    assert get_settings().ai.model == 'qwen3:8b'
+    page = configured.get('/admin/settings')
+    assert 'never-render-this-key' not in page.text
+    assert 'AI-filmkenner' in configured.get('/filmavond').text
+    assert configured.post('/admin/settings', data=settings_data(configured),
+                           follow_redirects=False).status_code == 303
+    assert get_settings().ai.enabled is False
+    assert 'value="ai"' not in configured.get('/filmavond').text
+
+
+@pytest.mark.parametrize('changes', [
+    {'ai_provider':'invalid'}, {'ai_model':''},
+    {'ai_base_url':'https://user:secret@example.com'},
+    {'ai_base_url':'https://example.com?key=secret'},
+    {'ai_base_url':'file:///etc/passwd'},
+])
+def test_invalid_ai_config_atomic(configured, changes):
+    from app.admin.settings import read_overrides
+    login(configured)
+    response = configured.post('/admin/settings', data=settings_data(
+        configured, override=list(changes), **changes))
+    assert response.status_code == 400
+    assert read_overrides() == ({}, 0)
+
+
+def test_ai_route_zero_retains_wish_and_viewers(configured, monkeypatch):
+    from types import SimpleNamespace
+
+    from app.movie_night import routes
+    from app.movie_night.ai import ExpertError
+    monkeypatch.setattr(routes.profiles_service, 'list_profiles', lambda db: [SimpleNamespace(id=1,name='Viewer')])
+    def no_results(*args):
+        raise ExpertError('Geen films op je diensten gevonden.')
+    monkeypatch.setattr(routes.service, 'create_night', no_results)
+    response = configured.post('/filmavond', data={
+        'viewers':'1', 'mode':'ai', 'prompt':'Muppets in Zweden'})
+    assert response.status_code == 400
+    assert 'Geen films op je diensten gevonden.' in response.text
+    assert 'value="1" checked' in response.text
+
+
+def test_deepseek_admin_configuration(configured, monkeypatch):
+    from app.config import get_settings
+    monkeypatch.setenv('PICKAFLICK_AI_API_KEY', 'deepseek-private-test-key')
+    login(configured)
+    changes = {'ai_enabled':'true', 'ai_provider':'deepseek', 'ai_model':'deepseek-flash'}
+    response = configured.post('/admin/settings', data=settings_data(
+        configured, override=list(changes), **changes), follow_redirects=False)
+    assert response.status_code == 303
+    assert get_settings().ai.provider == 'deepseek'
+    assert get_settings().ai.model == 'deepseek-flash'
+    assert get_settings().ai_api_key == 'deepseek-private-test-key'
+    page = configured.get('/admin/settings')
+    assert '<option selected>deepseek</option>' in page.text
+    assert 'deepseek-private-test-key' not in page.text

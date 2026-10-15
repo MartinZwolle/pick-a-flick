@@ -246,10 +246,15 @@ Pick a Flick does not send application telemetry to its author. It does make ext
 - **M9:** discovery modes and recommendation refinements — complete
 - **M10:** documentation, installation validation, screenshots, CI, container publishing and release preparation — complete
 - **M11:** admin login and configuration UI — complete; merged in [PR #4](https://github.com/MartinZwolle/pick-a-flick/pull/4)
-- **M12 (planned):** natural-language movie discovery with optional LLM suggestions
+- **M12:** natural-language movie discovery with optional LLM suggestions
 - **M13 (planned):** scheduling and Telegram notifications
 - **M14 (planned):** further stabilization and public release
 
 ## License
 
 [GPL-3.0-or-later](LICENSE).
+## M12: AI-filmkenner
+
+Optionele AI-bron voor hetzelfde solo- en groepsspel: vrije filmwens, maximaal tien
+via TMDb geverifieerde films op je ingestelde diensten. Ondersteunt DeepSeek, Ollama,
+OpenAI en Anthropic. Configuratie en beperkingen: [docs/M12.md](docs/M12.md).

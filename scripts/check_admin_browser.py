@@ -32,6 +32,10 @@ def main():
              "from app.admin.security import set_password; set_password(" + repr(PASSWORD) + ")"],
             env=env, check=True,
         )
+        import sqlite3
+        with sqlite3.connect(Path(directory) / "pickaflick.db") as db:
+            db.execute("INSERT INTO profiles (name, birth_year) VALUES ('Browser viewer', 1980)")
+        db.close()
         with socket.socket() as listener:
             listener.bind(("127.0.0.1", 0))
             port = listener.getsockname()[1]
@@ -96,11 +100,39 @@ def main():
                         page.get_by_role("button", name="Instellingen opslaan").click()
                         page.wait_for_url(base + "/admin/settings?saved=1")
                         expect(page.get_by_role("status")).to_have_text("Instellingen opgeslagen.")
+                        page.locator('[name=override][value=ai_enabled]').check()
+                        page.locator('#ai_enabled').select_option('true')
+                        page.locator('[name=override][value=ai_provider]').check()
+                        page.locator('#ai_provider').select_option('deepseek')
+                        page.locator('[name=override][value=ai_model]').check()
+                        page.locator('#ai_model').fill('deepseek-flash')
+                        page.get_by_role("button", name="Instellingen opslaan").click()
+                        page.wait_for_url(base + "/admin/settings?saved=1")
+                        expect(page.locator('#ai_provider')).to_have_value('deepseek')
+                        expect(page.locator('#ai_model')).to_have_value('deepseek-flash')
+                        page.goto(base + '/filmavond')
+                        page.locator('[name=viewers]').check()
+                        page.locator('[name=mode][value=ai]').check()
+                        page.locator('#film-wish').fill('Muppets in Zweden')
+                        # Exercise the real submit listener without sending a paid AI request.
+                        page.clock.install()
+                        page.evaluate("""() => {
+                            const form = document.getElementById('night-form');
+                            form.addEventListener('submit', e => e.preventDefault());
+                            form.requestSubmit();
+                        }""")
+                        expect(page.locator('#expert-loading')).to_be_visible()
+                        expect(page.locator('#night-form button')).to_be_disabled()
+                        page.clock.run_for(2900)
+                        expect(page.locator('#expert-line')).to_have_text('Duikuitrusting voor Kermit geregeld…')
+                        page.clock.run_for(2900)
+                        expect(page.locator('#expert-line')).to_have_text('Muppets in Zweden gelokaliseerd…')
+                        page.goto(base + '/admin/settings')
                         page.get_by_role("button", name="Uitloggen", exact=True).click()
                         page.wait_for_url(base + "/admin/login")
                 finally:
                     browser.close()
-            print("Chromium: old policy reproduced; HTTP login, settings and logout passed.")
+            print("Chromium: HTTP login, settings, logout and AI loading rotation passed.")
         finally:
             server.terminate()
             try:

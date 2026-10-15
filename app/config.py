@@ -3,10 +3,11 @@ from __future__ import annotations
 import os
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
+from urllib.parse import urlsplit
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class AppConfig(BaseModel):
@@ -47,9 +48,20 @@ class RecommendationsConfig(BaseModel):
 
 class AIConfig(BaseModel):
     enabled: bool = False
-    provider: str = "openai_compatible"
+    provider: Literal["openai_compatible", "openai", "anthropic", "ollama", "deepseek"] = "openai_compatible"
     base_url: str | None = None
     api_key_env: str = "PICKAFLICK_AI_API_KEY"
+    model: str = Field(default="gpt-4.1-mini", min_length=1, max_length=150)
+
+    @field_validator("base_url")
+    @classmethod
+    def endpoint(cls, value):
+        if not value:
+            return None
+        url = urlsplit(value)
+        if url.scheme not in {"http", "https"} or not url.hostname or url.username or url.password or url.query or url.fragment:
+            raise ValueError("Gebruik een HTTP(S)-adres zonder inloggegevens of query.")
+        return value.rstrip("/")
 
 
 class TMDbConfig(BaseModel):

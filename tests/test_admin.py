@@ -431,3 +431,19 @@ def test_ai_route_zero_retains_wish_and_viewers(configured, monkeypatch):
     assert response.status_code == 400
     assert 'Geen films op je diensten gevonden.' in response.text
     assert 'value="1" checked' in response.text
+
+
+def test_deepseek_admin_configuration(configured, monkeypatch):
+    from app.config import get_settings
+    monkeypatch.setenv('PICKAFLICK_AI_API_KEY', 'deepseek-private-test-key')
+    login(configured)
+    changes = {'ai_enabled':'true', 'ai_provider':'deepseek', 'ai_model':'deepseek-flash'}
+    response = configured.post('/admin/settings', data=settings_data(
+        configured, override=list(changes), **changes), follow_redirects=False)
+    assert response.status_code == 303
+    assert get_settings().ai.provider == 'deepseek'
+    assert get_settings().ai.model == 'deepseek-flash'
+    assert get_settings().ai_api_key == 'deepseek-private-test-key'
+    page = configured.get('/admin/settings')
+    assert '<option selected>deepseek</option>' in page.text
+    assert 'deepseek-private-test-key' not in page.text

@@ -28,7 +28,7 @@ Andere diensten gebruiken hun naam in kleine letters met underscores.</p>
       <option value="true" {% if values[name] %}selected{% endif %}>Ja</option>
     </select>
     {% elif name == 'ai_provider' %}
-    <select id="ai_provider" name="ai_provider">{% for provider in ['ollama','openai','anthropic','openai_compatible'] %}<option {% if values[name] == provider %}selected{% endif %}>{{ provider }}</option>{% endfor %}</select>
+    <select id="ai_provider" name="ai_provider">{% for provider in ['deepseek','ollama','openai','anthropic','openai_compatible'] %}<option {% if values[name] == provider %}selected{% endif %}>{{ provider }}</option>{% endfor %}</select>
     {% else %}
     <input id="{{ name }}" name="{{ name }}" maxlength="1000"
            {% if name == 'earliest_movie_year' %}type="number" min="1874"{% endif %}
@@ -41,7 +41,7 @@ Andere diensten gebruiken hun naam in kleine letters met underscores.</p>
 <p>Opgeslagen waarden gelden voor nieuwe aanvragen. Bestaande filmavondkandidaten
 worden niet opnieuw samengesteld. API-sleutels blijven in de serverconfiguratie.</p>
 <p>AI: kies provider en model. Ollama gebruikt standaard http://localhost:11434;
-OpenAI en Anthropic gebruiken hun vaste HTTPS-endpoint. Het serveradres geldt alleen voor
+DeepSeek, OpenAI en Anthropic gebruiken hun vaste HTTPS-endpoint. Het serveradres geldt alleen voor
 Ollama en openai_compatible. Sleutels worden uitsluitend uit de servervariabele
 PICKAFLICK_AI_API_KEY gelezen (of ai.api_key_env in YAML). Voer hier nooit een sleutel in.</p>
 <p><a href="/admin/password">Wachtwoord wijzigen</a></p>

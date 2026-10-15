@@ -61,6 +61,11 @@ def suggest(settings, prompt, taste):
         url = "https://api.anthropic.com/v1/messages"
         headers.update({"x-api-key": key, "anthropic-version": "2023-06-01"})
         body.update(system=SYSTEM, messages=messages[1:], max_tokens=4096)
+    elif kind == "deepseek":
+        url = "https://api.deepseek.com/chat/completions"
+        headers["Authorization"] = "Bearer " + key
+        body.update(response_format={"type": "json_object"}, max_tokens=4096,
+                    thinking={"type": "disabled"}, stream=False)
     else:
         base = "https://api.openai.com/v1" if kind == "openai" else settings.ai.base_url
         if not base:

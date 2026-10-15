@@ -256,5 +256,5 @@ Pick a Flick does not send application telemetry to its author. It does make ext
 ## M12: AI-filmkenner
 
 Optionele AI-bron voor hetzelfde solo- en groepsspel: vrije filmwens, maximaal tien
-via TMDb geverifieerde films op je ingestelde diensten. Ondersteunt Ollama, OpenAI en
-Anthropic. Configuratie en beperkingen: [docs/M12.md](docs/M12.md).
+via TMDb geverifieerde films op je ingestelde diensten. Ondersteunt DeepSeek, Ollama,
+OpenAI en Anthropic. Configuratie en beperkingen: [docs/M12.md](docs/M12.md).

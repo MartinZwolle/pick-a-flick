@@ -48,7 +48,7 @@ class RecommendationsConfig(BaseModel):
 
 class AIConfig(BaseModel):
     enabled: bool = False
-    provider: Literal["openai_compatible", "openai", "anthropic", "ollama"] = "openai_compatible"
+    provider: Literal["openai_compatible", "openai", "anthropic", "ollama", "deepseek"] = "openai_compatible"
     base_url: str | None = None
     api_key_env: str = "PICKAFLICK_AI_API_KEY"
     model: str = Field(default="gpt-4.1-mini", min_length=1, max_length=150)

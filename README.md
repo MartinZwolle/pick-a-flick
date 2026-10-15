@@ -65,6 +65,72 @@ The Compose file publishes port 8089 on the host and mounts `config.yaml` read-o
 
 **Security:** no application-level login is provided in this release. Do not publish the app or `/metrics` directly to the internet without appropriate access controls.
 
+
+## Prebuilt GHCR image
+
+After a version has been published, you can run it without building locally.
+Prepare `config.yaml`, `.env` and `data` as described above, then add a
+published version to `.env` (the example below is not a promise that this
+version already exists):
+
+```dotenv
+PICKAFLICK_VERSION=0.10.0
+```
+
+Use the standalone registry Compose file for every command:
+
+```bash
+docker compose -f compose.ghcr.yaml pull
+docker compose -f compose.ghcr.yaml up -d
+docker compose -f compose.ghcr.yaml ps
+docker compose -f compose.ghcr.yaml logs -f pick-a-flick
+```
+
+The image is `ghcr.io/martinzwolle/pick-a-flick:<version>` for
+`linux/amd64`. Configuration, port 8089, health checks and persistent data
+mounts match the local-build Compose file. Do not run both Compose variants
+at the same time. For an update, back up data and configuration, change
+`PICKAFLICK_VERSION`, then repeat `pull` and `up -d`. Startup runs database
+migrations; restoring an older image alone may not undo a database migration.
+
+### Publishing policy (maintainers)
+
+The Container workflow validates pull requests without logging in or pushing.
+It runs pytest, Ruff, Compose validation, a Docker build and a container
+health check after startup migrations. A push of a stable tag matching
+`vMAJOR.MINOR.PATCH` reruns these checks, verifies that the tagged commit is
+on `main`, then publishes exactly `MAJOR.MINOR.PATCH`. Prerelease and other
+tag formats are rejected. There are no `main`, `latest`, major or minor
+aliases. Treat published version tags as immutable: never move or reuse a
+release tag. For strict deployment pinning, use the image digest shown in GHCR.
+
+After merging the workflow PR and reviewing the green CI for the intended
+commit on `main`, a maintainer can create and push a new release tag:
+
+```bash
+git checkout main
+git pull --ff-only
+git tag v0.10.0
+git push origin v0.10.0
+```
+
+Choose an unused version; the commands above are examples. Tagging is a
+separate release action, not part of merging this change. Check the Container
+workflow and the repository's Packages page after publishing.
+
+Authentication uses the automatic `GITHUB_TOKEN`; no personal access token
+or repository secret is needed for publishing. Only the publish job has
+`packages: write`; validation has `contents: read`. Actions are pinned to
+commit SHAs and checkout does not persist credentials.
+
+GHCR packages are initially private. After the first successful publication,
+a maintainer must set the package visibility to **Public** in package
+settings to allow anonymous pulls. A public repository alone does not make
+its package public. Until then, authorized users need `docker login ghcr.io`
+with a token that has `read:packages`. If an existing package rejects
+publishing, check its Actions access for this repository.
+See [GitHub's Container registry documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
+
 ## First movie night
 
 1. Open **Profiles** and create a profile for each viewer.

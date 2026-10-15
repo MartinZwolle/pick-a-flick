@@ -11,6 +11,7 @@ Pick a Flick is a self-hosted movie-night decision helper. Instead of endlessly 
 - **Movie search:** find films through TMDb and add your own ratings.
 - **Availability:** check Dutch streaming providers against your household subscriptions and rental options using TMDb watch-provider data.
 - **Movie Night:** select the viewers, mood and runtime; explore recommendations, shortlist finalists and choose together.
+- **AI film expert (optional):** describe your movie wish in natural language; start the same solo/group game with up to ten TMDb-verified, available films. DeepSeek, Ollama, OpenAI and Anthropic are supported.
 - **Discovery:** try Surprise, Hidden Gems, Missed My Era or Rewatch modes.
 - **After watching:** record whether you watched the film and let each participant rate it separately.
 - **Explainable recommendations:** local taste-based ranking, without requiring an LLM.
@@ -69,14 +70,16 @@ The Compose file publishes port 8089 on the host and mounts `config.yaml` read-o
 
 ## Prebuilt GHCR image
 
-[v0.10.1](https://github.com/MartinZwolle/pick-a-flick/releases/tag/v0.10.1)
-is published, including the HTTP admin-login fix. The container image is
-`ghcr.io/martinzwolle/pick-a-flick:0.10.1`.
+This source prepares **v0.11.0**, including M12 and DeepSeek support.
+Use `ghcr.io/martinzwolle/pick-a-flick:0.11.0` only after the stable tag
+has been published and its Container workflow has completed successfully.
+See the [v0.11.0 release notes](docs/releases/v0.11.0.md).
+The previously published v0.10.1 image does not contain M12.
 Prepare `config.yaml`, `.env` and `data` as described above, then select the
 published version in `.env`:
 
 ```dotenv
-PICKAFLICK_VERSION=0.10.1
+PICKAFLICK_VERSION=0.11.0
 ```
 
 Use the standalone registry Compose file for every command:
@@ -125,6 +128,51 @@ with a token that has `read:packages`. If an existing package rejects
 publishing, check its Actions access for this repository.
 See [GitHub's Container registry documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
 
+## AI film expert and DeepSeek setup
+
+AI is optional and disabled by default. It adds a source to the existing Movie Night
+card game for one or more viewers; it does not add a chatbot or a separate game.
+Describe your wish in natural language. After searching, the cards start directly.
+Up to ten unique films are checked against TMDb titles/years and the streaming
+subscriptions or rental services configured for your region. Fewer films are fine;
+zero gives a clear message. Purchases and stale/error availability do not qualify.
+TMDb data can lag behind the services; rental may cost extra.
+
+For DeepSeek, add your own API key to the existing server `.env` using an editor:
+
+```dotenv
+PICKAFLICK_AI_API_KEY=your-deepseek-api-key
+```
+
+Keep the real value out of Git, chat, screenshots and shell arguments. Recreate the
+container with your selected Compose file so it receives the new environment.
+Then sign in to **Beheer → Instellingen**, check **Via web beheren** for these fields,
+set the values and save:
+
+| Setting | Value |
+| --- | --- |
+| AI-filmkenner actief | Ja |
+| AI-provider | `deepseek` |
+| AI-model | `deepseek-flash` |
+| AI-serveradres | Leave blank; DeepSeek uses a fixed HTTPS endpoint |
+
+The default model in an existing YAML file is not automatically changed when you
+select another provider: set the DeepSeek model explicitly. Provider model IDs may
+change; use a currently supported model ID for your account. The adapter uses JSON
+mode, `max_tokens=4096` and disables thinking for this film selection.
+The key remains server-side and is never included in the admin page or AI prompt.
+The provider receives the wish, region, configured services and summarized taste;
+no profile names, birth years or complete viewing history are sent.
+
+Choose **AI-filmkenner** on Movie Night, select the viewers and describe your wish.
+The rotating film reel shows playful, partly prompt-dependent texts without a
+fictional progress percentage. Creative interpretations are labelled on the cards.
+To stop using AI, turn it off in Beheer; ordinary discovery keeps working.
+
+For Ollama, OpenAI, Anthropic, compatible endpoints, timeouts and limitations, see
+[the M12 settings guide](docs/M12.md). Cloud provider tests use simulated responses;
+a real request still needs your configured key and account credit.
+
 ## First movie night
 
 1. Open **Profiles** and create a profile for each viewer.
@@ -135,7 +183,7 @@ See [GitHub's Container registry documentation](https://docs.github.com/en/packa
 6. Mark candidates, compare finalists and select your film.
 7. After watching, let each viewer rate the film individually.
 
-A film-specific personal veto is a hard exclusion for that viewer. Group feedback from a movie night is kept separate from individual post-watch ratings.
+In the ordinary discovery modes, a film-specific personal veto is a hard exclusion for that viewer. In the AI source, taste, previous viewing and vetoes are soft signals; they do not exclude a film. Group feedback from a movie night is kept separate from individual post-watch ratings.
 
 ## Configuration and data
 
@@ -161,7 +209,7 @@ image or update an existing installation.
 Admin is optional for ordinary household use. There is one administrator; no
 registration, roles or separate viewer accounts. Open **Beheer** to manage country,
 languages, streaming subscriptions, rental providers, earliest movie year and adult
-content. API keys remain in `.env`.
+content, plus AI enablement, provider, model and an optional local/compatible endpoint. API keys remain in `.env`.
 
 Existing limitation: the movie search/recommender does not yet use preferred/allowed
 language values as filters. M11 stores and exposes these settings without changing
@@ -246,15 +294,10 @@ Pick a Flick does not send application telemetry to its author. It does make ext
 - **M9:** discovery modes and recommendation refinements — complete
 - **M10:** documentation, installation validation, screenshots, CI, container publishing and release preparation — complete
 - **M11:** admin login and configuration UI — complete; merged in [PR #4](https://github.com/MartinZwolle/pick-a-flick/pull/4)
-- **M12:** natural-language movie discovery with optional LLM suggestions
+- **M12:** AI film expert as a source for the existing solo/group game, including DeepSeek — complete; merged in [PR #10](https://github.com/MartinZwolle/pick-a-flick/pull/10)
 - **M13 (planned):** scheduling and Telegram notifications
 - **M14 (planned):** further stabilization and public release
 
 ## License
 
 [GPL-3.0-or-later](LICENSE).
-## M12: AI-filmkenner
-
-Optionele AI-bron voor hetzelfde solo- en groepsspel: vrije filmwens, maximaal tien
-via TMDb geverifieerde films op je ingestelde diensten. Ondersteunt DeepSeek, Ollama,
-OpenAI en Anthropic. Configuratie en beperkingen: [docs/M12.md](docs/M12.md).

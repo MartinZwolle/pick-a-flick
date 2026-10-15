@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Beheer — Pick a Flick{% endblock %}
+{% block content %}
+<h1>Inloggen voor beheer</h1>
+{% if http_mode %}<p role="note">HTTP-beheer is ingeschakeld. Log alleen in op je vertrouwde thuisnetwerk.</p>{% endif %}
+<form method="post" action="/admin/login">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <label for="password">Admin-wachtwoord</label>
+  <input id="password" name="password" type="password" autocomplete="current-password"
+         maxlength="128" required autofocus>
+  <button type="submit">Inloggen</button>
+</form>
+<p>Wachtwoord vergeten? Herstel het via het lokale beheercommando op de server.</p>
+{% endblock %}

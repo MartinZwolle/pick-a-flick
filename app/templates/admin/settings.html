@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Instellingen — Pick a Flick{% endblock %}
+{% block content %}
+<h1>Beheerinstellingen</h1>
+{% if saved %}<p role="status">Instellingen opgeslagen.</p>{% endif %}
+{% if http_mode %}<p role="note">Je gebruikt HTTP-beheer voor een vertrouwd thuisnetwerk.</p>{% endif %}
+<p>Vink ‘Via web beheren’ aan om een waarde vast te leggen. Vink het uit om terug te keren
+naar het configuratiebestand. Gebruik komma’s tussen talen of providercodes.</p>
+<p>Voorbeelden: land NL; talen en, nl; providers netflix, disney_plus, prime_video,
+pathe_thuis, hbo_max, videoland, skyshowtime, apple_tv_plus, npo_plus.
+Andere diensten gebruiken hun naam in kleine letters met underscores.</p>
+<form method="post" action="/admin/settings">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="revision" value="{{ revision }}">
+  {% for name, info in fields.items() %}
+  <fieldset>
+    <legend>{{ info[0] }}</legend>
+    <label><input type="checkbox" name="override" value="{{ name }}"
+           {% if name in overrides %}checked{% endif %}> Via web beheren</label>
+    <p>Bron: {% if name in overrides %}webinstelling{% else %}configuratiebestand{% endif %}.
+       Waarde in configuratiebestand:
+       {% if name in lists %}{{ base[name]|join(', ') }}{% elif name == 'adult_content' %}{{ 'Ja' if base[name] else 'Nee' }}{% else %}{{ base[name] }}{% endif %}</p>
+    <label for="{{ name }}">Waarde voor {{ info[0]|lower }}</label>
+    {% if name == 'adult_content' %}
+    <select id="{{ name }}" name="{{ name }}">
+      <option value="false" {% if not values[name] %}selected{% endif %}>Nee</option>
+      <option value="true" {% if values[name] %}selected{% endif %}>Ja</option>
+    </select>
+    {% else %}
+    <input id="{{ name }}" name="{{ name }}" maxlength="1000"
+           {% if name == 'earliest_movie_year' %}type="number" min="1874"{% endif %}
+           value="{% if name in lists %}{{ values[name]|join(', ') }}{% else %}{{ values[name] }}{% endif %}">
+    {% endif %}
+  </fieldset>
+  {% endfor %}
+  <button type="submit">Instellingen opslaan</button>
+</form>
+<p>Opgeslagen waarden gelden voor nieuwe aanvragen. Bestaande filmavondkandidaten
+worden niet opnieuw samengesteld. API-sleutels blijven in de serverconfiguratie.</p>
+<p><a href="/admin/password">Wachtwoord wijzigen</a></p>
+<form method="post" action="/admin/logout">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <button type="submit">Uitloggen</button>
+</form>
+{% endblock %}

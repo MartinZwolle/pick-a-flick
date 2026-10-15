@@ -121,7 +121,7 @@ def save_settings(session_token, csrf, raw_revision, overrides):
             merge(get_base_settings(), overrides)
         except (ValidationError, KeyError, TypeError, ValueError):
             raise AdminError(
-                "Controleer land- en taalcodes, providercodes en filmjaar. "
+                "Controleer land- en taalcodes, providercodes, filmjaar en AI-provider, model en serveradres. "
                 "Voorkeurstalen moeten ook toegestaan zijn. Er is niets opgeslagen.", 400
             ) from None
         db.execute(
@@ -132,7 +132,7 @@ def save_settings(session_token, csrf, raw_revision, overrides):
 
 @router.post("/settings")
 async def settings_save(request: Request):
-    form = await request.form(max_files=0, max_fields=30)
+    form = await request.form(max_files=0, max_fields=50)
     selected = form.getlist("override")
     if any(name not in FIELDS for name in selected):
         raise AdminError("Onbekende instelling.", 400)
@@ -143,7 +143,7 @@ async def settings_save(request: Request):
             raise AdminError("Ongeldige waarde.", 400)
         if name in LIST_FIELDS:
             overrides[name] = [v.strip().lower() for v in raw.split(",") if v.strip()]
-        elif name == "adult_content":
+        elif name in {"adult_content", "ai_enabled"}:
             if raw not in {"true", "false"}:
                 raise AdminError("Ongeldige waarde.", 400)
             overrides[name] = raw == "true"
@@ -152,6 +152,8 @@ async def settings_save(request: Request):
                 overrides[name] = int(raw)
             except ValueError:
                 raise AdminError("Vul een geldig filmjaar in.", 400) from None
+        elif name.startswith("ai_"):
+            overrides[name] = raw.strip() or None
         else:
             overrides[name] = raw.strip().upper()
     csrf = form.get("csrf", "")

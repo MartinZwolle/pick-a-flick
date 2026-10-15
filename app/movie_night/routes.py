@@ -3,18 +3,35 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.database import get_db
 from app.movie_night import service
+from app.movie_night.ai import ExpertError
 from app.movie_night.models import MovieNightCandidate
 from app.profiles import service as profiles_service
+from app.providers.metadata.tmdb import TMDbError
 
 router=APIRouter(prefix="/filmavond",tags=["movie-night"]);templates=Jinja2Templates(directory="app/templates")
 @router.get("",response_class=HTMLResponse)
 def start(request:Request,db:Session=Depends(get_db)):
-    return templates.TemplateResponse(request=request,name="movie_night/start.html",context={"profiles":profiles_service.list_profiles(db)})
+    return templates.TemplateResponse(request=request,name="movie_night/start.html",context={"profiles":profiles_service.list_profiles(db), "ai_enabled":get_settings().ai.enabled})
 @router.post("")
-def create(viewers:list[int]=Form(...),moods:list[str]=Form(default=[]),runtime_max:str=Form(default=""),mode:str=Form(default="normal"),db:Session=Depends(get_db)):
-    night=service.create_night(db,viewers,moods,int(runtime_max) if runtime_max.isdigit() else None,mode);return RedirectResponse(f"/filmavond/{night.id}",303)
+def create(request:Request,viewers:list[int]=Form(...),moods:list[str]=Form(default=[]),runtime_max:str=Form(default=""),mode:str=Form(default="normal"),prompt:str=Form(default="",max_length=1500),db:Session=Depends(get_db)):
+    profiles = profiles_service.list_profiles(db)
+    if not viewers or not set(viewers) <= {p.id for p in profiles}:
+        raise HTTPException(400, "Kies bestaande kijkers.")
+    try:
+        if mode == "ai" and not prompt.strip():
+            raise ExpertError("Beschrijf eerst waar je zin in hebt.")
+        night=service.create_night(db,viewers,moods,int(runtime_max) if runtime_max.isdigit() else None,mode,prompt.strip())
+    except (ExpertError, TMDbError) as exc:
+        db.rollback()
+        message = str(exc) if isinstance(exc, ExpertError) else "TMDb kon niet worden bereikt. Probeer later opnieuw."
+        return templates.TemplateResponse(request=request,name="movie_night/start.html",context={
+            "profiles":profiles,"ai_enabled":get_settings().ai.enabled,"error":message,
+            "prompt":prompt,"selected_viewers":viewers,"selected_mode":mode,
+            "selected_runtime":runtime_max,"selected_moods":moods},status_code=400)
+    return RedirectResponse(f"/filmavond/{night.id}",303)
 @router.get("/{night_id}",response_class=HTMLResponse)
 def show(night_id:int,request:Request,db:Session=Depends(get_db)):
     night,viewers,candidates=service.get_night(db,night_id)

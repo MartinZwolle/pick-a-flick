@@ -50,7 +50,25 @@ def _score(movie,gs,ac,ds,n):
     return round(score,2),reasons[:3]
 MODES={"normal","surprise","gems","era","rewatch"}
 
-def create_night(db,profile_ids,moods,runtime_max,mode="normal"):
+def create_night(db,profile_ids,moods,runtime_max,mode="normal",prompt=""):
+    if mode == "ai":
+        from app.movie_night.ai import ExpertError
+        from app.movie_night.ai import discover as expert_discover
+        found = expert_discover(db, profile_ids, prompt, runtime_max)
+        if not found:
+            raise ExpertError("Geen verifieerbare films gevonden bij je wens op de ingestelde diensten en regio. Probeer een ruimere filmwens of pas je diensten aan.")
+        night = MovieNight(mode="ai", moods="", runtime_max=runtime_max,
+                           relaxation_note=f"AI-filmkenner: {len(found)} kaarten. Creatieve interpretaties staan bij de films. Beschikbaarheid via TMDb kan achterlopen.")
+        db.add(night)
+        db.flush()
+        for pid in sorted(set(profile_ids)):
+            db.add(MovieNightViewer(movie_night_id=night.id, profile_id=pid))
+        for score, movie, reasons in found:
+            db.add(MovieNightCandidate(movie_night_id=night.id, movie_id=movie.id,
+                                      score=score, reasons_json=json.dumps(reasons)))
+        db.commit()
+        db.refresh(night)
+        return night
     mode=mode if mode in MODES else "normal"
     night=MovieNight(mode=mode,moods=",".join(moods[:2]),runtime_max=runtime_max)
     db.add(night);db.flush()

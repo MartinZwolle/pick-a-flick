@@ -22,15 +22,17 @@ Andere diensten gebruiken hun naam in kleine letters met underscores.</p>
        {% if name in lists %}{{ base[name]|join(', ') }}{% elif name == 'adult_content' %}{{ 'Ja' if base[name] else 'Nee' }}{% else %}{{ base[name] }}{% endif %}</p>
     {% if name in ['preferred', 'allowed'] %}<p>Deze taalwaarden worden bewaard. De huidige filmzoekfunctie gebruikt ze nog niet als taalfilter.</p>{% endif %}
     <label for="{{ name }}">Waarde voor {{ info[0]|lower }}</label>
-    {% if name == 'adult_content' %}
+    {% if name in ['adult_content', 'ai_enabled'] %}
     <select id="{{ name }}" name="{{ name }}">
       <option value="false" {% if not values[name] %}selected{% endif %}>Nee</option>
       <option value="true" {% if values[name] %}selected{% endif %}>Ja</option>
     </select>
+    {% elif name == 'ai_provider' %}
+    <select id="ai_provider" name="ai_provider">{% for provider in ['ollama','openai','anthropic','openai_compatible'] %}<option {% if values[name] == provider %}selected{% endif %}>{{ provider }}</option>{% endfor %}</select>
     {% else %}
     <input id="{{ name }}" name="{{ name }}" maxlength="1000"
            {% if name == 'earliest_movie_year' %}type="number" min="1874"{% endif %}
-           value="{% if name in lists %}{{ values[name]|join(', ') }}{% else %}{{ values[name] }}{% endif %}">
+           value="{% if name in lists %}{{ values[name]|join(', ') }}{% else %}{{ values[name] or '' }}{% endif %}">
     {% endif %}
   </fieldset>
   {% endfor %}
@@ -38,6 +40,10 @@ Andere diensten gebruiken hun naam in kleine letters met underscores.</p>
 </form>
 <p>Opgeslagen waarden gelden voor nieuwe aanvragen. Bestaande filmavondkandidaten
 worden niet opnieuw samengesteld. API-sleutels blijven in de serverconfiguratie.</p>
+<p>AI: kies provider en model. Ollama gebruikt standaard http://localhost:11434;
+OpenAI en Anthropic gebruiken hun vaste HTTPS-endpoint. Het serveradres geldt alleen voor
+Ollama en openai_compatible. Sleutels worden uitsluitend uit de servervariabele
+PICKAFLICK_AI_API_KEY gelezen (of ai.api_key_env in YAML). Voer hier nooit een sleutel in.</p>
 <p><a href="/admin/password">Wachtwoord wijzigen</a></p>
 <form method="post" action="/admin/logout">
   <input type="hidden" name="csrf" value="{{ csrf }}">

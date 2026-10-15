@@ -6,10 +6,11 @@
   <h1>Wie zitten er op de bank?</h1>
   <p class="muted">Kies hoe jullie vanavond willen zoeken. Alleen films die beschikbaar zijn komen langs.</p>
 </section>
-<form class="night-form" method="post">
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+<form class="night-form" method="post" id="night-form">
 <fieldset>
   <legend>1. Kijkers</legend>
-  <div class="viewer-grid">{% for p in profiles %}<label class="viewer-card"><input type="checkbox" name="viewers" value="{{ p.id }}"><span>👤 <strong>{{ p.name }}</strong></span></label>{% endfor %}</div>
+  <div class="viewer-grid">{% for p in profiles %}<label class="viewer-card"><input type="checkbox" name="viewers" value="{{ p.id }}" {% if p.id in (selected_viewers or []) %}checked{% endif %}><span>👤 <strong>{{ p.name }}</strong></span></label>{% endfor %}</div>
 </fieldset>
 
 <fieldset>
@@ -22,11 +23,19 @@
       ('era','📼','Gemist uit mijn tijd','Films uit de jaren waarin jullie filmsmaak gevormd werd.'),
       ('rewatch','🔁','Nog een keer','Alleen films die iemand als opnieuw kijken heeft gemarkeerd.')
     ] %}
-    <label class="mode-card"><input type="radio" name="mode" value="{{ v }}" {% if v=='normal' %}checked{% endif %}>
+    <label class="mode-card"><input type="radio" name="mode" value="{{ v }}" {% if v==(selected_mode or 'normal') %}checked{% endif %}>
       <span><b>{{ icon }} {{ title }}</b><small>{{ copy }}</small></span>
     </label>
     {% endfor %}
+    {% if ai_enabled %}<label class="mode-card"><input type="radio" name="mode" value="ai" {% if selected_mode=='ai' %}checked{% endif %}><span><b>🧠 AI-filmkenner</b><small>Jouw filmwens, maximaal 10 kaarten in het bestaande spel.</small></span></label>{% endif %}
   </div>
+  {% if ai_enabled %}
+  <label for="film-wish">Waar heb je zin in? (voor de AI-filmkenner)</label>
+  <textarea id="film-wish" name="prompt" maxlength="1500" rows="3" placeholder="Iets als de Muppets op een duikvakantie in Zweden">{{ prompt or '' }}</textarea>
+  <p class="muted">Alleen of samen: kies je kijkers. Smaak helpt zachtjes mee.
+  De filmkenner mag je wens creatief interpreteren. Alleen films op ingestelde diensten in jouw regio komen langs;
+  TMDb kan achterlopen. Huur kan extra kosten. Je wens en samengevatte smaak gaan naar de ingestelde AI-provider.</p>
+  {% endif %}
 </fieldset>
 
 <fieldset>
@@ -36,5 +45,7 @@
 
 <fieldset><legend>4. Hoe lang?</legend><select name="runtime_max"><option value="">Maakt niet uit</option><option value="100">Max 1u40</option><option value="120">Max 2 uur</option><option value="150">Max 2u30</option></select></fieldset>
 <button class="button primary big">🎬 Start de kaarten</button>
+<div id="expert-loading" hidden role="status" aria-live="polite"><span class="film-reel" aria-hidden="true">🎞️</span><p id="expert-line">De filmspoel wordt opgewarmd…</p><small>Even geduld, we zoeken films en controleren de diensten.</small></div>
 </form>
+<script src="/static/film-expert.js" defer></script>
 {% endblock %}

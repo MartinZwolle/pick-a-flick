@@ -69,7 +69,8 @@ async def admin_headers(request: Request, call_next):
     if request.url.path == "/admin" or request.url.path.startswith("/admin/"):
         response.headers["Cache-Control"] = "no-store"
         response.headers["Pragma"] = "no-cache"
-        response.headers["Referrer-Policy"] = "no-referrer"
+        # Preserve same-origin form Origin on HTTP; no-referrer makes it "null".
+        response.headers["Referrer-Policy"] = "same-origin"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Content-Security-Policy"] = (

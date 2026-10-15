@@ -1,11 +1,13 @@
-from fastapi import APIRouter,Depends,Form,HTTPException,Request
-from fastapi.responses import HTMLResponse,RedirectResponse
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+
 from app.database import get_db
 from app.movie_night import service
 from app.movie_night.models import MovieNightCandidate
 from app.profiles import service as profiles_service
+
 router=APIRouter(prefix="/filmavond",tags=["movie-night"]);templates=Jinja2Templates(directory="app/templates")
 @router.get("",response_class=HTMLResponse)
 def start(request:Request,db:Session=Depends(get_db)):

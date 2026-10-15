@@ -5,8 +5,8 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from app.catalog.models import Movie, MovieCredit, MovieGenre, ProfileMovieRating  # noqa: F401
 from app.availability.models import MovieAvailabilityCache, MovieAvailabilityFetch  # noqa: F401
+from app.catalog.models import Movie, MovieCredit, MovieGenre, ProfileMovieRating  # noqa: F401
 from app.config import get_data_dir
 from app.database import Base
 from app.onboarding.models import ProfileOnboardingResponse  # noqa: F401
@@ -43,6 +43,11 @@ if context.is_offline_mode():
 else:
     run_migrations_online()
 
-from app.movie_night.models import MovieNight, MovieNightViewer, MovieNightCandidate, GroupMovieVeto  # noqa: F401
-
-from app.movie_night.models import WatchEvent, WatchParticipant  # noqa: F401
+from app.movie_night.models import (  # noqa: F401
+    GroupMovieVeto,
+    MovieNight,
+    MovieNightCandidate,
+    MovieNightViewer,
+    WatchEvent,
+    WatchParticipant,
+)

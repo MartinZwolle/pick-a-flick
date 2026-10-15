@@ -1,7 +1,10 @@
 from __future__ import annotations
+
 import httpx
+
 from app.config import Settings
 from app.providers.metadata.base import CreditData, GenreData, MovieDetails, MovieSearchResult
+
 
 class TMDbError(RuntimeError): pass
 

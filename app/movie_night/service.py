@@ -1,15 +1,24 @@
 import json
 from collections import defaultdict
 from dataclasses import dataclass
+
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+
 from app.availability import service as availability_service
 from app.catalog import service as catalog_service
-from app.catalog.models import Movie,ProfileMovieRating
+from app.catalog.models import ProfileMovieRating
 from app.config import get_settings
-from app.movie_night.models import GroupMovieVeto,MovieNight,MovieNightCandidate,MovieNightViewer,WatchEvent,WatchParticipant
-from app.providers.metadata.tmdb import TMDbProvider
+from app.movie_night.models import (
+    GroupMovieVeto,
+    MovieNight,
+    MovieNightCandidate,
+    MovieNightViewer,
+    WatchEvent,
+    WatchParticipant,
+)
 from app.providers.availability.tmdb import provider_slug
+from app.providers.metadata.tmdb import TMDbProvider
+
 MOODS={"licht":[35,10749],"spannend":[53,9648],"actie":[28,12],"slim":[878,9648],"warm":[18,10751],"donker":[53,80,27]}
 @dataclass
 class CandidateView:
@@ -117,7 +126,7 @@ def discover(db,night,ids,moods,runtime_max,mode="normal"):
             reasons.insert(0,(", ".join(names.get(pid,"Iemand") for pid in who[movie.id]))+" wil deze nog eens zien")
             found.append((score+4,movie,reasons[:3]))
     else:
-        attempts=[];common=dict(provider_ids=pids or None)
+        attempts=[];common={"provider_ids": pids or None}
         if mode=="gems":
             attempts=[
                 dict(genre_ids=gids or None,runtime_max=runtime_max,sort_by="vote_average.desc",vote_count_min=250,vote_average_min=6.5,**common),

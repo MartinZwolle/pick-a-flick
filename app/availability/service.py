@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
@@ -11,7 +11,6 @@ from app.catalog.models import Movie
 from app.config import get_settings
 from app.providers.availability.tmdb import TMDbAvailabilityProvider
 from app.providers.metadata.tmdb import TMDbError
-
 
 CACHE_TTL = timedelta(hours=24)
 
@@ -60,8 +59,8 @@ def _is_fresh(fetch: MovieAvailabilityFetch | None) -> bool:
         return False
     fetched = fetch.fetched_at
     if fetched.tzinfo is None:
-        fetched = fetched.replace(tzinfo=timezone.utc)
-    return datetime.now(timezone.utc) - fetched < CACHE_TTL
+        fetched = fetched.replace(tzinfo=UTC)
+    return datetime.now(UTC) - fetched < CACHE_TTL
 
 
 def refresh(db: Session, movie: Movie) -> tuple[list[MovieAvailabilityCache], MovieAvailabilityFetch]:
@@ -75,7 +74,7 @@ def refresh(db: Session, movie: Movie) -> tuple[list[MovieAvailabilityCache], Mo
             MovieAvailabilityCache.country == country,
         )
     )
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     for item in result.items:
         db.add(
             MovieAvailabilityCache(

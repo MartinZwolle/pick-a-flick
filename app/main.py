@@ -11,12 +11,12 @@ from sqlalchemy.orm import Session
 from app.catalog.routes import router as catalog_router
 from app.config import get_settings
 from app.database import get_db
+from app.movie_night.routes import router as movie_night_router
 from app.observability.logging import configure_logging
 from app.observability.metrics import metrics_middleware
 from app.onboarding.routes import router as onboarding_router
 from app.profiles.routes import router as profiles_router
 from app.recommendations.routes import router as recommendations_router
-from app.movie_night.routes import router as movie_night_router
 
 settings = get_settings()
 configure_logging(settings.app.log_level)

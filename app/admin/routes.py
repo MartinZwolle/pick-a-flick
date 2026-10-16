@@ -94,10 +94,13 @@ def sign_out(request: Request, csrf: str = Form(...)):
 def settings_page(request: Request):
     session = security.current_session(token(request))
     overrides, revision = read_overrides()
+    from app.movie_night.planning import settings as planning_settings
+    with transaction() as db:
+        planning = planning_settings(db)
     base = get_base_settings()
     effective = merge(base, overrides)
     return page(request, "settings", {
-        "csrf": session["csrf"], "fields": FIELDS, "lists": LIST_FIELDS,
+        "planning": planning, "csrf": session["csrf"], "fields": FIELDS, "lists": LIST_FIELDS,
         "values": values_from(effective), "base": values_from(base),
         "overrides": overrides, "revision": revision, "http_mode": allow_http(),
         "saved": request.query_params.get("saved") == "1",

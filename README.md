@@ -301,3 +301,9 @@ Pick a Flick does not send application telemetry to its author. It does make ext
 ## License
 
 [GPL-3.0-or-later](LICENSE).
+# M13: filmavondplanning
+
+Plan een filmavond vanuit een gewonnen spel en bekijk komende afspraken en historie
+via **Filmavonden**. Telegram is optioneel en configureerbaar in Beheer.
+Zie [M13: installatie, tijdzones, meldingen en afleveringsbeperking](docs/M13.md)
+en de [backlog voor M14 en na v1.0](docs/BACKLOG.md).

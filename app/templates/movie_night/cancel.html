@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Filmavond annuleren?</h1>
+<p>{{ item.title }} · {{ item.label }}</p>
+<p>De afspraak wordt geannuleerd en herinneringen vervallen. Als Telegram aanstaat, krijgt de groep bericht.</p>
+<form method="post">
+  <input type="hidden" name="revision" value="{{ item.revision }}">
+  <button name="confirm" value="yes">Ja, filmavond annuleren</button>
+  <a href="/filmavond/{{ item.night_id }}">Afspraak behouden</a>
+</form>
+{% endblock %}

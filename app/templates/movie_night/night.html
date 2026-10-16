@@ -2,6 +2,7 @@
 {% block title %}Filmavond · Pick a Flick{% endblock %}
 {% block content %}
 {% if selected %}
+{% include "movie_night/planning_form.html" %}
 <section class="chosen-film">
   <p class="eyebrow">🎬 Deze wordt het</p>
   <h1>{{ selected.record.movie.title }}</h1>

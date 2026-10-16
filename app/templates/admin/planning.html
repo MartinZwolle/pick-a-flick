@@ -1,0 +1,20 @@
+<h2>Filmavondplanning en Telegram</h2>
+{% if request.query_params.get('telegram') == 'sent' %}<p role="status">Testbericht verzonden.</p>{% endif %}
+<form method="post" action="/admin/planning" class="form-card night-form">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="planning_revision" value="{{ planning.revision }}">
+  <label for="timezone">IANA-tijdzone</label>
+  <input id="timezone" name="timezone" required value="{{ planning.timezone }}">
+  <p>Een wijziging houdt bestaande aanvangsmomenten gelijk en berekent toekomstige herinneringen opnieuw.</p>
+  <label><input type="checkbox" name="telegram_enabled" {% if planning.enabled %}checked{% endif %}> Telegram inschakelen (optioneel)</label>
+  <label for="bot_token">Bot-token {{ '(opgeslagen; leeg laten om te behouden)' if planning.token else '' }}</label>
+  <input id="bot_token" name="bot_token" type="password" autocomplete="new-password" maxlength="150">
+  <label><input type="checkbox" name="clear_token">Opgeslagen bot-token verwijderen</label>
+  <label for="chat_id">Chat-ID</label><input id="chat_id" name="chat_id" value="{{ planning.chat_id }}" maxlength="21">
+  <label for="base_url">Publiek websiteadres voor links</label>
+  <input id="base_url" name="base_url" type="url" value="{{ planning.base_url }}" placeholder="https://films.example.nl">
+  <button>Planninginstellingen opslaan</button>
+</form>
+<form method="post" action="/admin/telegram-test">
+  <input type="hidden" name="csrf" value="{{ csrf }}"><button>Telegram-testbericht versturen</button>
+</form>

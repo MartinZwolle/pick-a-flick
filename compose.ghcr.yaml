@@ -1,6 +1,6 @@
 services:
   pick-a-flick:
-    image: ghcr.io/martinzwolle/pick-a-flick:${PICKAFLICK_VERSION:?Set PICKAFLICK_VERSION to a published version, for example 0.11.0}
+    image: ghcr.io/martinzwolle/pick-a-flick:${PICKAFLICK_VERSION:?Set PICKAFLICK_VERSION to a published version, for example 0.12.0}
     container_name: pick-a-flick
     restart: unless-stopped
     ports:

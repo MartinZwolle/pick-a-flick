@@ -13,6 +13,8 @@ Pick a Flick is a self-hosted movie-night decision helper. Instead of endlessly 
 - **Movie Night:** select the viewers, mood and runtime; explore recommendations, shortlist finalists and choose together.
 - **AI film expert (optional):** describe your movie wish in natural language; start the same solo/group game with up to ten TMDb-verified, available films. DeepSeek, Ollama, OpenAI and Anthropic are supported.
 - **Discovery:** try Surprise, Hidden Gems, Missed My Era or Rewatch modes.
+- **Planning:** schedule a winning solo/group game with a required date and manually chosen start time; reschedule or cancel with confirmation. View upcoming evenings and automatic history.
+- **Telegram (optional):** planning/change/cancellation messages, film-day and one-hour reminders, plus a next-morning rating link.
 - **After watching:** record whether you watched the film and let each participant rate it separately.
 - **Explainable recommendations:** local taste-based ranking, without requiring an LLM.
 - **Admin configuration:** one admin login for household settings, with local password setup/recovery and web overrides that preserve the YAML configuration.
@@ -70,16 +72,16 @@ The Compose file publishes port 8089 on the host and mounts `config.yaml` read-o
 
 ## Prebuilt GHCR image
 
-This source prepares **v0.11.0**, including M12 and DeepSeek support.
-Use `ghcr.io/martinzwolle/pick-a-flick:0.11.0` only after the stable tag
+The current release is **v0.12.0**, including M13 planning and optional Telegram reminders.
+Use `ghcr.io/martinzwolle/pick-a-flick:0.12.0` only after the stable tag
 has been published and its Container workflow has completed successfully.
-See the [v0.11.0 release notes](docs/releases/v0.11.0.md).
-The previously published v0.10.1 image does not contain M12.
+See the [v0.12.0 release notes](docs/releases/v0.12.0.md).
+The previous v0.11.0 image does not contain M13.
 Prepare `config.yaml`, `.env` and `data` as described above, then select the
 published version in `.env`:
 
 ```dotenv
-PICKAFLICK_VERSION=0.11.0
+PICKAFLICK_VERSION=0.12.0
 ```
 
 Use the standalone registry Compose file for every command:
@@ -173,6 +175,47 @@ For Ollama, OpenAI, Anthropic, compatible endpoints, timeouts and limitations, s
 [the M12 settings guide](docs/M12.md). Cloud provider tests use simulated responses;
 a real request still needs your configured key and account credit.
 
+## Filmavond planning and Telegram
+
+After choosing a winner, plan the evening from the game result. Date and start time
+are required, with no default start time. Anyone with access to the game can move or
+cancel it; cancellation requires confirmation. **Filmavonden** shows upcoming evenings
+and history. An evening moves to history automatically at its start time.
+
+Planning works without Telegram. To enable notifications:
+
+1. Set `PICKAFLICK_SECRET_KEY` in the existing server `.env`. Generate a Fernet key
+   with the command below. Keep it private and back it up separately from the database.
+2. Recreate the container so it receives the key.
+3. In **Beheer → Filmavondplanning en Telegram**, enter the bot-token, numeric chat-ID
+   (including any minus sign) and the website address participants can open.
+4. Choose the IANA timezone (default `Europe/Amsterdam`), enable Telegram and save.
+5. Use **Telegram-testbericht versturen** to check delivery to the intended chat.
+
+Generate and append the key without displaying it, using the running registry container:
+
+```bash
+umask 077
+docker compose -f compose.ghcr.yaml exec -T pick-a-flick python -c \
+  'from cryptography.fernet import Fernet; print("PICKAFLICK_SECRET_KEY=" + Fernet.generate_key().decode())' >> .env
+docker compose -f compose.ghcr.yaml up -d --force-recreate pick-a-flick
+```
+
+Only generate a key if the setting does not already exist. For source builds, omit
+`-f compose.ghcr.yaml`. The token is encrypted in SQLite; a blank token field keeps
+the saved token. Neither the bot-token nor encryption key belongs in Git or chat.
+
+Notifications cover planning, changes and cancellation, film-day 10:00, one hour
+before the start and the following local morning at 10:00 with a rating link.
+Timezone calculations respect daylight saving time. Invalid or ambiguous clock-change
+times are rejected. The worker runs with the app and keeps its queue in SQLite.
+Elapsed reminder moments are skipped (60-second polling tolerance).
+
+Telegram has no idempotency key: after a crash or uncertain network result a message
+may be missing; automatic retry is avoided to prevent duplicate delivery. Explicit
+Telegram failures are also not retried automatically. See [the M13 operations guide](docs/M13.md)
+for delivery states, encryption, timing and restart behavior.
+
 ## First movie night
 
 1. Open **Profiles** and create a profile for each viewer.
@@ -181,7 +224,8 @@ a real request still needs your configured key and account credit.
 4. Start **Movie Night** and select who is watching.
 5. Choose your mood, runtime and discovery mode; review the suggested films.
 6. Mark candidates, compare finalists and select your film.
-7. After watching, let each viewer rate the film individually.
+7. Optionally plan the evening from the result page. Choose both date and start time.
+8. After watching, let each viewer rate the film individually.
 
 In the ordinary discovery modes, a film-specific personal veto is a hard exclusion for that viewer. In the AI source, taste, previous viewing and vetoes are soft signals; they do not exclude a film. Group feedback from a movie night is kept separate from individual post-watch ratings.
 
@@ -209,7 +253,7 @@ image or update an existing installation.
 Admin is optional for ordinary household use. There is one administrator; no
 registration, roles or separate viewer accounts. Open **Beheer** to manage country,
 languages, streaming subscriptions, rental providers, earliest movie year and adult
-content, plus AI enablement, provider, model and an optional local/compatible endpoint. API keys remain in `.env`.
+content, plus AI enablement, provider, model and an optional local/compatible endpoint. TMDb and AI keys remain in `.env`. The separate planning form manages the IANA timezone and optional encrypted Telegram bot token.
 
 Existing limitation: the movie search/recommender does not yet use preferred/allowed
 language values as filters. M11 stores and exposes these settings without changing
@@ -295,15 +339,10 @@ Pick a Flick does not send application telemetry to its author. It does make ext
 - **M10:** documentation, installation validation, screenshots, CI, container publishing and release preparation — complete
 - **M11:** admin login and configuration UI — complete; merged in [PR #4](https://github.com/MartinZwolle/pick-a-flick/pull/4)
 - **M12:** AI film expert as a source for the existing solo/group game, including DeepSeek — complete; merged in [PR #10](https://github.com/MartinZwolle/pick-a-flick/pull/10)
-- **M13 (planned):** scheduling and Telegram notifications
-- **M14 (planned):** further stabilization and public release
+- **M13:** scheduling, automatic history, IANA timezones and optional persistent Telegram notifications — complete; merged in [PR #12](https://github.com/MartinZwolle/pick-a-flick/pull/12)
+- **M14 (planned):** CSS/visual polish, an icon for the admin link, further stabilization and public release
+- **After v1.0:** individual profiles with login; see [the backlog](docs/BACKLOG.md)
 
 ## License
 
 [GPL-3.0-or-later](LICENSE).
-# M13: filmavondplanning
-
-Plan een filmavond vanuit een gewonnen spel en bekijk komende afspraken en historie
-via **Filmavonden**. Telegram is optioneel en configureerbaar in Beheer.
-Zie [M13: installatie, tijdzones, meldingen en afleveringsbeperking](docs/M13.md)
-en de [backlog voor M14 en na v1.0](docs/BACKLOG.md).

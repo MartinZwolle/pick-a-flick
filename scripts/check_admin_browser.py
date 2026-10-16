@@ -97,7 +97,7 @@ def main():
                         cookie = next(c for c in cookies if c["name"] == "pickaflick_admin")
                         assert cookie["httpOnly"] and cookie["sameSite"] == "Strict"
                         assert not cookie["secure"]
-                        page.get_by_role("button", name="Instellingen opslaan").click()
+                        page.get_by_role("button", name="Instellingen opslaan", exact=True).click()
                         page.wait_for_url(base + "/admin/settings?saved=1")
                         expect(page.get_by_role("status")).to_have_text("Instellingen opgeslagen.")
                         page.locator('[name=override][value=ai_enabled]').check()
@@ -106,10 +106,22 @@ def main():
                         page.locator('#ai_provider').select_option('deepseek')
                         page.locator('[name=override][value=ai_model]').check()
                         page.locator('#ai_model').fill('deepseek-flash')
-                        page.get_by_role("button", name="Instellingen opslaan").click()
+                        page.get_by_role("button", name="Instellingen opslaan", exact=True).click()
                         page.wait_for_url(base + "/admin/settings?saved=1")
                         expect(page.locator('#ai_provider')).to_have_value('deepseek')
                         expect(page.locator('#ai_model')).to_have_value('deepseek-flash')
+                        # The separate M13 form must save independently of general settings.
+                        expect(page.get_by_label('IANA-tijdzone')).to_have_value('Europe/Amsterdam')
+                        page.get_by_label('IANA-tijdzone').fill('Europe/Berlin')
+                        with page.expect_response(
+                            lambda r: r.request.method == 'POST' and
+                            r.url == base + '/admin/planning'
+                        ) as planning_saved:
+                            page.get_by_role('button', name='Planninginstellingen opslaan', exact=True).click()
+                        assert planning_saved.value.status == 303
+                        page.wait_for_url(base + '/admin/settings?saved=1')
+                        expect(page.get_by_label('IANA-tijdzone')).to_have_value('Europe/Berlin')
+                        expect(page.locator('#ai_provider')).to_have_value('deepseek')
                         page.goto(base + '/filmavond')
                         page.locator('[name=viewers]').check()
                         page.locator('[name=mode][value=ai]').check()

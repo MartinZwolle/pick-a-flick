@@ -1,0 +1,17 @@
+<section id="planning" class="form-card">
+<h2>Filmavond plannen</h2>
+{% if appointment %}<p>{{ appointment.label }}{% if appointment.cancelled %} · Geannuleerd{% endif %}</p>{% endif %}
+{% if not appointment or appointment.cancelled or not appointment.history %}
+<p>Kies zelf datum en begintijd ({{ planning_timezone }}).</p>
+<form method="post" action="/filmavond/{{ night.id }}/planning">
+  <input type="hidden" name="revision" value="{{ appointment.revision if appointment else 0 }}">
+  <label for="plan-day">Datum</label>
+  <input id="plan-day" name="day" type="date" required value="{{ appointment.day if appointment and not appointment.cancelled else '' }}">
+  <label for="plan-clock">Begintijd</label>
+  <input id="plan-clock" name="clock" type="time" required value="{{ appointment.clock if appointment and not appointment.cancelled else '' }}">
+  <button>{{ 'Verplaatsen' if appointment and not appointment.cancelled else 'Plannen' }}</button>
+</form>
+{% if appointment and not appointment.cancelled %}<a href="/filmavond/{{ night.id }}/annuleren">Filmavond annuleren</a>{% endif %}
+{% else %}<p>Deze filmavond staat in de historie.</p>{% endif %}
+<p><a href="/filmavonden">Alle filmavonden</a></p>
+</section>

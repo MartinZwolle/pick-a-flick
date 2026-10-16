@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Filmavonden · Pick a Flick{% endblock %}
+{% block content %}
+<h1>Filmavonden</h1>
+<p>Tijden in {{ timezone }}. Plan een filmavond nadat je een spel hebt gewonnen.</p>
+{% for history, heading in [(false, 'Komende filmavonden'), (true, 'Historie')] %}
+<h2>{{ heading }}</h2>
+{% set group = items|selectattr('history', 'equalto', history)|list %}
+{% for item in group %}
+<article class="form-card">
+  <h3><a href="/filmavond/{{ item.night_id }}">{{ item.title }}</a></h3>
+  <p>{{ item.label }}{% if item.cancelled %} · Geannuleerd{% endif %}</p>
+  {% if not history %}<a href="/filmavond/{{ item.night_id }}#planning">Verplaatsen</a> ·
+  <a href="/filmavond/{{ item.night_id }}/annuleren">Annuleren</a>{% else %}
+  <a href="/filmavond/{{ item.night_id }}/feedback">Beoordelen</a>{% endif %}
+</article>
+{% else %}<p>Geen {{ heading|lower }}.</p>{% endfor %}
+{% endfor %}
+{% endblock %}

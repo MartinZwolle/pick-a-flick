@@ -44,6 +44,7 @@ worden niet opnieuw samengesteld. API-sleutels blijven in de serverconfiguratie.
 DeepSeek, OpenAI en Anthropic gebruiken hun vaste HTTPS-endpoint. Het serveradres geldt alleen voor
 Ollama en openai_compatible. Sleutels worden uitsluitend uit de servervariabele
 PICKAFLICK_AI_API_KEY gelezen (of ai.api_key_env in YAML). Voer hier nooit een sleutel in.</p>
+{% include "admin/planning.html" %}
 <p><a href="/admin/password">Wachtwoord wijzigen</a></p>
 <form method="post" action="/admin/logout">
   <input type="hidden" name="csrf" value="{{ csrf }}">
